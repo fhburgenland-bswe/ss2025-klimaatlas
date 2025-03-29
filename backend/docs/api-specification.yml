@@ -117,3 +117,98 @@ paths:
           description: Invalid request
         '500':
           description: Server error
+
+  /mosquito-alert:
+    get:
+      summary: Get mosquito alert data for a specific location
+      parameters:
+        - name: postalCode
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Postal code of the location
+        - name: cityName
+          in: query
+          schema:
+            type: string
+          required: false
+          description: City name of the location
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+          required: false
+          description: Start date for filtering reports (YYYY-MM-DD)
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+          required: false
+          description: End date for filtering reports (YYYY-MM-DD)
+        - name: species
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Filter by mosquito species
+        - name: riskLevel
+          in: query
+          schema:
+            type: string
+            enum: [ low, medium, high ]
+          required: false
+          description: Minimum risk level to filter results
+      responses:
+        '200':
+          description: Mosquito alert data for the location
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  region:
+                    type: string
+                  latitude:
+                    type: number
+                    format: float
+                    description: Latitude of the affected region
+                  longitude:
+                    type: number
+                    format: float
+                    description: Longitude of the affected region
+                  mosquitoSpecies:
+                    type: array
+                    items:
+                      type: string
+                    description: List of mosquito species reported in the region
+                  alertLevel:
+                    type: string
+                    description: Risk level of mosquito activity (low, medium, high)
+                  reportCount:
+                    type: integer
+                    description: Number of mosquito reports in the region
+                  diseaseRisk:
+                    type: array
+                    items:
+                      type: string
+                    description: List of potential diseases carried by the detected mosquito species
+                  lastReported:
+                    type: string
+                    format: date-time
+                    description: Timestamp of the last reported mosquito sighting
+                  trendAnalysis:
+                    type: string
+                    enum: [ increasing, stable, decreasing ]
+                    description: Trend of mosquito reports over the last weeks
+                  dataSources:
+                    type: array
+                    items:
+                      type: string
+                    description: Sources of the mosquito alert data
+        '400':
+          description: Invalid request
+        '500':
+          description: Server error
