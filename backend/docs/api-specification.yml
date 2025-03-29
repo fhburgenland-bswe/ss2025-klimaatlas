@@ -1,0 +1,119 @@
+openapi: 3.0.0
+servers:
+  - url: https://api.big5health.at/backend
+    description: Production Server
+  - url: http://localhost:8080
+    description: Staging Server
+info:
+  description: OpenAPI Specification for the Climate-Health Atlas Project
+  version: "1.0.0"
+  title: Atlas der Klima-bezogenen Gesundheitsrisiken API
+  contact:
+    name: Hochschule Burgenland Team
+    email: 2310859039@hochschule-burgenland.at
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /search:
+    get:
+      summary: Search locations by postal code or city name
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Postal code or city name
+      responses:
+        '200':
+          description: Successful search
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    postalCode:
+                      type: string
+                    cityName:
+                      type: string
+                    region:
+                      type: string
+        '400':
+          description: Invalid request
+        '500':
+          description: Server error
+
+  /temperature:
+    get:
+      summary: Get temperature projections for a location
+      parameters:
+        - name: postalCode
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Postal code of the location
+        - name: cityName
+          in: query
+          schema:
+            type: string
+          required: false
+          description: City name of the location
+      responses:
+        '200':
+          description: Temperature projection data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  year:
+                    type: integer
+                  season:
+                    type: string
+                  temperatureIncrease:
+                    type: number
+        '400':
+          description: Invalid request
+        '500':
+          description: Server error
+
+  /health-risks:
+    get:
+      summary: Get climate-related health risks for a location
+      parameters:
+        - name: postalCode
+          in: query
+          schema:
+            type: string
+          required: false
+        - name: cityName
+          in: query
+          schema:
+            type: string
+          required: false
+      responses:
+        '200':
+          description: Health risks for the location
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    riskType:
+                      type: string
+                    description:
+                      type: string
+                    recommendations:
+                      type: array
+                      items:
+                        type: string
+        '400':
+          description: Invalid request
+        '500':
+          description: Server error
