@@ -15,12 +15,32 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
 paths:
-  /weather:
+  /dailyweather:
     get:
       tags:
-        - weather
-      summary: Minimal, maximal temperature, precipitation, sunshine duration, coordinates.
-      description: Get minimal and maximal temperature, precipitation, sunshine duration per kilometer for Austria originally from Spartacus.
+        - dailyweather
+      summary: Minimal, maximal temperature, precipitation, sunshine duration, coordinates for actual day.
+      description: Get minimal and maximal temperature, precipitation, sunshine duration per kilometer for Austria originally from Spartacus for actual day.
+      parameters:
+        - name: postalCode
+          in: query
+          schema:
+            type: string
+          required: false
+          description: Postal code of the location
+        - name: cityName
+          in: query
+          schema:
+            type: string
+          required: false
+          description: City name of the location
+        - name: actualDate
+          in: query
+          schema:
+            type: string
+            format: date
+          required: false
+          description: Date for showing weather data (YYYY-MM-DD)
       responses:
         '200':
           description: Weather specific data in an object.
@@ -196,9 +216,6 @@ paths:
                       type: string
                       format: date
                       example: "2024-03-31"
-                    species:
-                      type: string
-                      example: "insect"
                     source:
                       type: string
                       example: "GBIF"
