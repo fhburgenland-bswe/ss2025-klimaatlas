@@ -212,10 +212,19 @@ paths:
                       type: number
                       format: float
                       example: 16.3738
+                    stateProvince:
+                      type: string
+                      example: "Kaernten"
+                    city:
+                      type: string
+                      example: "Wien"
                     date:
                       type: string
                       format: date
                       example: "2024-03-31"
+                    species:
+                      type: string
+                      example: "insect"
                     source:
                       type: string
                       example: "GBIF"
