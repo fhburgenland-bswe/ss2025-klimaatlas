@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/klimaatlas.main.iml" filepath="$PROJECT_DIR$/.idea/modules/klimaatlas.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/ss2025-klimaatlas.iml" filepath="$PROJECT_DIR$/.idea/ss2025-klimaatlas.iml" />
     </modules>
   </component>
