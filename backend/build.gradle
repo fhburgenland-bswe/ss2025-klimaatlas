@@ -20,12 +20,12 @@ pmd {
 	ignoreFailures = false
 	consoleOutput = true
 	ruleSets = []
-	ruleSetFiles = files("/config/pmd/ruleset.xml")
+	ruleSetFiles = files("$rootDir/config/pmd/ruleset.xml")
 }
 
 checkstyle {
 	toolVersion = "10.0"
-	configFile = file("config/checkstyle/checkstyle.xml")
+	configFile = file("$rootDir/config/checkstyle/checkstyle.xml")
 }
 
 configurations {
