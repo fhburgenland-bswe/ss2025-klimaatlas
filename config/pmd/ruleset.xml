@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="Custom PMD Ruleset"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 http://pmd.sourceforge.net/ruleset_2_0_0.xsd"
+         xsi:noNamespaceSchemaLocation="http://pmd.sourceforge.net/ruleset_2_0_0.xsd">
+
+    <!-- Optional: Beschreibung des Regel-Sets -->
+    <description>
+        Custom ruleset for PMD checks in the WeatherApp project.
+    </description>
+
+    <!-- Regeln zu Code-Struktur -->
+    <rule ref="category/java/bestpractices.xml/UnusedImports"/>
+    <rule ref="category/java/errorprone.xml/NullAssignment"/>
+    <rule ref="category/java/errorprone.xml/ArrayIsStoredDirectly"/>
+    <rule ref="category/java/errorprone.xml/DefaultLabelNotLastInSwitchStmt"/>
+    <rule ref="category/java/errorprone.xml/EmptyCatchBlock"/>
+
+    <!-- Regeln zur Code-Sicherheit -->
+    <rule ref="category/java/security.xml/AvoidHardCodedCredentials"/>
+    <rule ref="category/java/security.xml/InsecureCryptoIv"/>
+
+    <!-- Regeln zu Code-Stil -->
+    <rule ref="category/java/codestyle.xml/ClassNamingConventions"/>
+    <rule ref="category/java/codestyle.xml/MethodNamingConventions"/>
+    <rule ref="category/java/codestyle.xml/UnusedPrivateField"/>
+
+    <!-- Optionale Konfiguration für eine spezifische Regel -->
+    <rule ref="category/java/design.xml/ExcessiveMethodLength">
+        <properties>
+            <property name="minimum" value="100"/>
+        </properties>
+    </rule>
+
+    <!-- Regel zur Reduzierung von Duplikaten -->
+    <rule ref="category/java/design.xml/CloneImplementationMustImplementCloneable"/>
+</ruleset>
