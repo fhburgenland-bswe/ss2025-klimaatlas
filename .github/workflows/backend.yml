@@ -38,11 +38,13 @@ jobs:
           distribution: 'corretto'
 
       - name: PMD Check
+        working-directory: backend
         run: |
           chmod +x ./gradlew
           ./gradlew clean pmdMain pmdTest
 
       - name: Checkstyle
+        working-directory: backend
         run: |
           chmod +x ./gradlew
           ./gradlew clean checkstyleMain checkstyleTest
