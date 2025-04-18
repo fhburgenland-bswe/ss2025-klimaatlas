@@ -96,27 +96,3 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4.2.2
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4.1.4
-        with:
-          name: spring-boot-jar
-
-#      - name: Deploy JAR to Server
-#        uses: appleboy/scp-action@v0.1.4
-#        with:
-#          host: ${{ secrets.SSH_HOST }}
-#          username: ${{ secrets.SSH_USER }}
-#          key: ${{ secrets.SSH_KEY }}
-#          source: "*.jar"
-#          target: "/home/${{ secrets.SSH_USER }}/app/"
-
-#      - name: Restart Application on Server
-#        uses: appleboy/ssh-action@v1.0.3
-#        with:
-#          host: ${{ secrets.SSH_HOST }}
-#          username: ${{ secrets.SSH_USER }}
-#          key: ${{ secrets.SSH_KEY }}
-#          script: |
-#            pkill -f 'java -jar' || true
-#            nohup java -jar /home/${{ secrets.SSH_USER }}/app/*.jar > app.log 2>&1 &
