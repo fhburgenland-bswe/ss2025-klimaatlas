@@ -93,10 +93,8 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm install
-
-#      - name: Install Angular CLI
-#        run: npm install @angular/cli
 
       - name: Run lint (ESLint)
         run: npm run lint
@@ -114,16 +112,18 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
+        working-directory: ./frontend
         run: npm install
 
       - name: Build Angular project
+        working-directory: ./frontend
         run: npm run build --prod
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build
-          path: dist/
+          path: ./frontend/dist/
 
   deploy:
     runs-on: ubuntu-latest
