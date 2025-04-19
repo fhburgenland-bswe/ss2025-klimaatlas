@@ -54,6 +54,7 @@ jobs:
           name: playwright-report
           path: ./frontend/playwright-report/
           retention-days: 30
+          continue-on-error: true
 
   unit_tests:
     runs-on: ubuntu-latest
