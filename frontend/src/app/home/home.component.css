@@ -1,0 +1,76 @@
+#map {
+  height: 100vh;
+  width: 100%;
+}
+
+.search-container {
+  position: absolute;
+  top: 10px;
+  left: 50px;
+  width: 300px;
+  z-index: 1000;
+
+  input {
+    width: 100%;
+    max-width: 300px;
+    height: 10%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1.5px solid lightgrey;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+    box-shadow: 0px 0px 20px -18px;
+  }
+
+  input:hover {
+    border: 2px solid lightgrey;
+    box-shadow: 0px 0px 20px -17px;
+  }
+  
+  input:active {
+    transform: scale(0.95);
+  }
+  
+  input:focus {
+    border: 2px solid grey;
+  }
+
+  .dropdown {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.781);
+    border: 1px solid #ccc;
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 12px;
+
+    li {
+      padding: 8px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: #eee;
+      }
+    }
+  }
+}
+
+@media screen and (max-width: 600px){
+    
+  .search-container {
+    width: 100%;
+    left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+}
