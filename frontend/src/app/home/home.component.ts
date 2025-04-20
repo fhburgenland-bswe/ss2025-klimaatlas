@@ -23,7 +23,7 @@ export class HomeComponent implements AfterViewInit, OnInit{
   ];
   cities: City[] = [];
   filteredCities: City[] = [];
-  searchTerm: string = '';
+  searchTerm = '';
   selectedMarker?: L.Marker;
 
   constructor(private http: HttpClient) {}
