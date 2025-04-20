@@ -1,0 +1,24 @@
+<div class="container">
+    <!-- Search input container -->
+    <div class="search-container">
+        <!-- Input field for search term, binds with searchTerm variable, triggers search and enter key events -->
+        <input
+            type="text"
+            placeholder="Ort oder Postleitzahl..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            (keydown)="onEnterKey($event)"
+        />
+
+        <!-- Dropdown for filtered cities, shown when there are filtered results -->
+        <ul *ngIf="filteredCities.length > 0" class="dropdown">
+            <li *ngFor="let p of filteredCities" (click)="selectPlace(p)">
+            <!-- Display city name and zipcode, selects city on click -->
+            {{ p.place }} ({{ p.zipcode }})
+            </li>
+        </ul>
+    </div>
+
+    <!-- Map container, where the Leaflet map will be displayed -->
+    <div id="map"></div> 
+</div>
