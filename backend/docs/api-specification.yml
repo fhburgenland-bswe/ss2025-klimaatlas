@@ -22,24 +22,34 @@ paths:
       summary: Minimal, maximal temperature, precipitation, sunshine duration, coordinates for actual day.
       description: Get minimal and maximal temperature, precipitation, sunshine duration per kilometer for Austria originally from Spartacus for actual day.
       parameters:
-        - name: postalCode
-          in: query
-          schema:
-            type: string
-          required: false
-          description: Postal code of the location
         - name: cityName
           in: query
           schema:
             type: string
-          required: false
+          required: true
           description: City name of the location
+        - name: longitude
+          in: query
+          schema:
+            type: number
+            format: Double
+          required: true
+          description: Longitude of the Location
+          example: 32.7
+        - name: latitude
+          in: query
+          schema:
+            type: number
+            format: Double
+            example: 32.7
+          required: true
+          description: Latitude of the Location
         - name: actualDate
           in: query
           schema:
             type: string
             format: date
-          required: false
+          required: true
           description: Date for showing weather data (YYYY-MM-DD)
       responses:
         '200':
@@ -51,11 +61,11 @@ paths:
                 properties:
                   minTemp:
                     type: number
-                    format: float
+                    format: Double
                     example: 15.6
                   maxTemp:
                     type: number
-                    format: float
+                    format: Double
                     example: 32.7
                   precip:
                     type: string
@@ -63,15 +73,15 @@ paths:
                     example: "rain"
                   sunDuration:
                     type: number
-                    format: float
+                    format: Double
                     example: "5.2"
                   latitude:
                     type: number
-                    format: float
+                    format: Double
                     example: 48.2082
                   longitude:
                     type: number
-                    format: float
+                    format: Double
                     example: 16.3738
         '400':
           description: Invalid request (e.g. post request)
