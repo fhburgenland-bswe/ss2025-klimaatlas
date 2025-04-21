@@ -22,8 +22,8 @@ The main goal of this project is to develop an **online atlas for climate & heal
 - **Backend:** Java SpringBoot
 - **Map functionality:** OpenStreetMap, Leaflet
 - **Data sources:**
-- Central Institute for Meteorology and Geodynamics (ZAMG)
-- Austrian Agency for Health and Food Safety (AGES)
+  - Central Institute for Meteorology and Geodynamics (ZAMG)
+  - Austrian Agency for Health and Food Safety (AGES)
 
 ## Schedule
 - **April 2025**: Kick-off press conference for “Skin Health Month 2025”
