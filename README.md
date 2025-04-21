@@ -18,9 +18,9 @@ The main goal of this project is to develop an **online atlas for climate & heal
 - **Contact and service points**: Integration of information about heat protection rooms, medical services and advice centers.
 
 ## Technology stack
-- **Frontend:** ...
-- **Backend:** ...
-- **Map functionality:** OpenStreetMap or Google Maps, Leaflet or other mapping technologies
+- **Frontend:** Angular
+- **Backend:** Java SpringBoot
+- **Map functionality:** OpenStreetMap, Leaflet
 - **Data sources:**
 - Central Institute for Meteorology and Geodynamics (ZAMG)
 - Austrian Agency for Health and Food Safety (AGES)
@@ -30,4 +30,4 @@ The main goal of this project is to develop an **online atlas for climate & heal
 - **June 2025**: Planned go-live of the atlas
 
 ## Setup & Installation
-1. Clone the repository: ...
+Coming soon ...
