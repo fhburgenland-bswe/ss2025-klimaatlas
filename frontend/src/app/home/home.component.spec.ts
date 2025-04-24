@@ -6,6 +6,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import L from 'leaflet';
+import { FeatureCollection, Feature, Geometry } from 'geojson';
 
 describe('HomeComponent', () => {
   let component: HomeComponent;
@@ -46,9 +47,9 @@ describe('HomeComponent', () => {
     httpMock = TestBed.inject(HttpTestingController);
 
     // stub out Leaflet.marker so it doesn't call map.addLayer()
-    const fakeLayer = { bindPopup: () => ({ openPopup: () => {} }) };
+    const fakeLayer = { bindPopup: () => ({ openPopup: () => { void 0; } }) };
     const fakeMarker = { addTo: () => fakeLayer };
-    spyOn(L, 'marker').and.returnValue(fakeMarker as any);
+    spyOn(L, 'marker').and.returnValue(fakeMarker as unknown as L.Marker);
 
     // mock data
     component.cities = mockCities;
@@ -58,14 +59,14 @@ describe('HomeComponent', () => {
     httpMock.expectOne('assets/cities.json').flush(mockCities);
 
     // 2. austria-regions.geojson from loadRegions()
-    const dummyGeo = {
+    const dummyGeo: GeoJSON.FeatureCollection = {
       type: 'FeatureCollection',
       features: []
-    } as const;
+    };
     
     httpMock
       .expectOne('assets/austria-regions.geojson')
-      .flush(dummyGeo as any);
+      .flush(dummyGeo as GeoJSON.FeatureCollection);
   });
 
   afterEach(() => {
@@ -145,7 +146,12 @@ describe('HomeComponent', () => {
   
       const req = httpMock.expectOne('assets/austria-regions.geojson');
   
-      req.flush({ type: 'FeatureCollection', features: [] } as any);
+      const emptyGeoJson: FeatureCollection = {
+        type: 'FeatureCollection',
+        features: []
+      };
+      
+      req.flush(emptyGeoJson);
   
       expect(L.geoJSON).toHaveBeenCalledWith(jasmine.any(Object), jasmine.any(Object));
     });
@@ -186,10 +192,12 @@ describe('HomeComponent', () => {
   describe('loadRegions popup binding', () => {
     it('should bind popup when feature has NAME_1 property', () => {
       // Spy on geoJSON to intercept options
-      let onEachFeatureFn: (feat: any, layer: any) => void;
+      let onEachFeatureFn: (feature: Feature, layer: L.Layer) => void;
+      // eslint-disable-next-line
       spyOn(L, 'geoJSON').and.callFake((_data, options: any) => {
         onEachFeatureFn = options.onEachFeature;
         // Return an object with addTo method to satisfy chain
+        // eslint-disable-next-line
         return { addTo: () => {} } as any;
       });
       // Provide a test map
@@ -200,29 +208,53 @@ describe('HomeComponent', () => {
 
       // Flush HTTP request
       const req = httpMock.expectOne('assets/austria-regions.geojson');
-      req.flush({ type: 'FeatureCollection', features: [
-        { properties: { NAME_1: 'Burgenland' }, geometry: { type: 'Polygon', coordinates: [] } }
-      ] } as any);
+      req.flush({
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: { NAME_1: 'Burgenland' },
+            geometry: { type: 'Polygon', coordinates: [] } as Geometry
+          }
+        ]
+      } as FeatureCollection<Geometry>);
 
       const fakeLayer = jasmine.createSpyObj('layer', ['bindPopup']);
-      onEachFeatureFn!({ properties: { NAME_1: 'Burgenland' } }, fakeLayer);
+      onEachFeatureFn!({
+        type: 'Feature',
+        properties: { NAME_1: 'Burgenland' },
+        geometry: { type: 'Polygon', coordinates: [] }
+      }, fakeLayer);
 
       expect(fakeLayer.bindPopup).toHaveBeenCalledWith('Burgenland');
     });
 
     it('should not bind popup when feature has no NAME_1', () => {
+      // eslint-disable-next-line
       let onEachFeatureFn: (feat: any, layer: any) => void;
+      // eslint-disable-next-line
       spyOn(L, 'geoJSON').and.callFake((_data, options: any) => {
         onEachFeatureFn = options.onEachFeature;
+        // eslint-disable-next-line
         return { addTo: () => {} } as any;
       });
       component.map = jasmine.createSpyObj('map', ['addLayer']);
 
       component.loadRegions();
       const req = httpMock.expectOne('assets/austria-regions.geojson');
-      req.flush({ type: 'FeatureCollection', features: [
-        { properties: { }, geometry: { type: 'Polygon', coordinates: [] } }
-      ] } as any);
+      req.flush({
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'Polygon',
+              coordinates: [[]]
+            }
+          }
+        ]
+      } as GeoJSON.FeatureCollection);
 
       const fakeLayer = jasmine.createSpyObj('layer', ['bindPopup']);
       onEachFeatureFn!({ properties: {} }, fakeLayer);
@@ -233,7 +265,9 @@ describe('HomeComponent', () => {
 
   describe('loadRegions style function', () => {
     it('should use the provided style options for each feature', () => {
+      // eslint-disable-next-line
       spyOn(L, 'geoJSON').and.callFake((_data, options: any) => {
+        // eslint-disable-next-line
         const styleResult = options.style({} as any);
         expect(styleResult).toEqual({
           color: 'blue',
@@ -241,12 +275,16 @@ describe('HomeComponent', () => {
           fillColor: 'rgba(0, 100, 255, 0.1)',
           fillOpacity: 0.4
         });
+        // eslint-disable-next-line
         return { addTo: () => {} } as any;
       });
       component.map = jasmine.createSpyObj('map', ['addLayer']);
       component.loadRegions();
       const req = httpMock.expectOne('assets/austria-regions.geojson');
-      req.flush({ type: 'FeatureCollection', features: [] } as any);
+      req.flush({
+        type: 'FeatureCollection',
+        features: []
+      } as FeatureCollection<Geometry>);
     });
   });
 });
