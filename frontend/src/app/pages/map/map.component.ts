@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import * as L from 'leaflet';
 import { HttpClient } from '@angular/common/http';
-import { City } from '../interfaces/city-interface';
+import { City } from '../../interfaces/city-interface';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { GeoJsonObject } from 'geojson';
@@ -12,10 +12,10 @@ import { GeoJsonObject } from 'geojson';
     FormsModule,
     CommonModule
   ],
-  templateUrl: './home.component.html',
-  styleUrl: './home.component.css'
+  templateUrl: './map.component.html',
+  styleUrl: './map.component.scss'
 })
-export class HomeComponent implements AfterViewInit, OnInit{
+export class MapComponent implements AfterViewInit, OnInit {
   public map!: L.Map;
   private central: L.LatLngExpression = [47.5162, 14.5501]
   private bounds: L.LatLngBoundsExpression = [
@@ -27,11 +27,24 @@ export class HomeComponent implements AfterViewInit, OnInit{
   searchTerm = '';
   selectedMarker?: L.Marker;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   ngAfterViewInit(): void {
     // Initializes the map and loads region data after the view is rendered
     this.initMap();
+    // Enable scroll zoom only when holding CTRL
+
+    this.map.on('focus', () => {
+      const container = this.map.getContainer();
+
+      container.addEventListener('wheel', (e: WheelEvent) => {
+        if (e.ctrlKey) {
+          this.map.scrollWheelZoom.enable();
+        } else {
+          this.map.scrollWheelZoom.disable();
+        }
+      });
+    });
     this.loadRegions();
   }
 
@@ -52,7 +65,7 @@ export class HomeComponent implements AfterViewInit, OnInit{
       minZoom: isMobile ? 6 : 8,
       maxZoom: 12,
       maxBounds: this.bounds,
-      scrollWheelZoom: !isMobile,
+      scrollWheelZoom: false,
       touchZoom: isMobile,
       doubleClickZoom: false,
       maxBoundsViscosity: 1.0
