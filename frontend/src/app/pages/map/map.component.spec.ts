@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { HomeComponent } from './home.component';
-import { City } from '../interfaces/city-interface';
+import { MapComponent } from './map.component';
+import { City } from '../../interfaces/city-interface';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import L from 'leaflet';
 import { FeatureCollection, Feature, Geometry } from 'geojson';
 
-describe('HomeComponent', () => {
-  let component: HomeComponent;
-  let fixture: ComponentFixture<HomeComponent>;
+describe('MapComponent', () => {
+  let component: MapComponent;
+  let fixture: ComponentFixture<MapComponent>;
   let httpMock: HttpTestingController;
 
   const mockCities: City[] = [
@@ -38,11 +38,11 @@ describe('HomeComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HomeComponent, HttpClientTestingModule, FormsModule, CommonModule]
+      imports: [MapComponent, HttpClientTestingModule, FormsModule, CommonModule]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(HomeComponent);
+    fixture = TestBed.createComponent(MapComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
 
