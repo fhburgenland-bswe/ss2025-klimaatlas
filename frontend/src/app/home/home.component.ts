@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { City } from '../interfaces/city-interface';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { GeoJsonObject } from 'geojson';
 
 @Component({
   selector: 'app-home',
@@ -67,9 +68,9 @@ export class HomeComponent implements AfterViewInit, OnInit{
 
   public loadRegions(): void {
     // Loads geojson data for regions and adds them to the map with custom styling
-    this.http.get('assets/austria-regions.geojson').subscribe((geojson: any) => {
+    this.http.get<GeoJsonObject>('assets/austria-regions.geojson').subscribe((geojson) => {
       L.geoJSON(geojson, {
-        style: (feature) => ({
+        style: () => ({
           color: 'blue',
           weight: 3,
           fillColor: 'rgba(0, 100, 255, 0.1)',

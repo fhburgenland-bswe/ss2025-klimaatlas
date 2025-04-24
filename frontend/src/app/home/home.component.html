@@ -12,7 +12,7 @@
 
         <!-- Dropdown for filtered cities, shown when there are filtered results -->
         <ul *ngIf="filteredCities.length > 0" class="dropdown">
-            <li *ngFor="let p of filteredCities" (click)="selectPlace(p)">
+            <li *ngFor="let p of filteredCities" (click)="selectPlace(p)" (keydown.enter)="selectPlace(p)" tabindex="0">
             <!-- Display city name and zipcode, selects city on click -->
             {{ p.place }} ({{ p.zipcode }})
             </li>
