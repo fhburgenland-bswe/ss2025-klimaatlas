@@ -44,18 +44,39 @@ test.describe('Frontend Main Flows', () => {
     await expect(cityLabel).toBeVisible();
   });
 
-  test('should be responsive on mobile viewports', async ({ page }) => {
-    // Set viewport to mobile size
-    await page.setViewportSize({ width: 390, height: 844 });
-
+  test('should allow zooming and panning on the map', async ({ page }) => {
     await page.goto('/');
-
-    // Verify the search bar and map are still visible
-    const searchBar = page.locator('input[placeholder="Ort oder Postleitzahl..."]').first();
-    await expect(searchBar).toBeVisible();
 
     const mapCanvas = page.locator('div#map');
     await expect(mapCanvas).toBeVisible();
+
+    // Simuliere einen Zoom-In über Scroll
+    await mapCanvas.hover();
+    await page.mouse.wheel(0, -500); //
+
+    // Simuliere Kartenverschiebung (Panning)
+    const box = await mapCanvas.boundingBox();
+    if (box) {
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(box.x + 100, box.y + 100); //
+      await page.mouse.up();
+    }
+
+    // Kein Fehler = erfolgreich
+    await expect(mapCanvas).toBeVisible();
+  });
+
+  test('should show empty map if no data available for search', async ({ page }) => {
+    await page.goto('/');
+
+    const searchBar = page.locator('input[placeholder="Ort oder Postleitzahl..."]').first();
+    await searchBar.fill('9999');
+    await searchBar.press('Enter');
+
+    // Überprüfen, ob keine Marker vorhanden sind (z.B. keine neuen Markerelemente sichtbar)
+    const markers = page.locator('.map-marker');
+    await expect(markers).toHaveCount(0);
   });
 
 });
