@@ -27,11 +27,24 @@ export class MapComponent implements AfterViewInit, OnInit {
   searchTerm = '';
   selectedMarker?: L.Marker;
 
+  selectedPlaceName: string | null = null;
+  private bezirkLayer?: L.GeoJSON;
+
+
   constructor(private http: HttpClient) { }
 
   ngAfterViewInit(): void {
+    // eslint-disable-next-line
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+
     // Initializes the map and loads region data after the view is rendered
     this.initMap();
+
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'assets/img/marker-icon-2x.png',
+      iconUrl: 'assets/img/marker-icon-2x.png',
+      shadowUrl: 'assets/img/marker-shadow.png'
+    });
     // Enable scroll zoom only when holding CTRL
 
     this.map.on('focus', () => {
@@ -63,7 +76,7 @@ export class MapComponent implements AfterViewInit, OnInit {
       center: this.central,
       zoom: isMobile ? 6 : 7,
       minZoom: isMobile ? 6 : 8,
-      maxZoom: 12,
+      maxZoom: 15,
       maxBounds: this.bounds,
       scrollWheelZoom: false,
       touchZoom: isMobile,
@@ -117,7 +130,7 @@ export class MapComponent implements AfterViewInit, OnInit {
     // Selects a city by setting the map view to its coordinates and adding a marker for it
     const lat = parseFloat(city.latitude);
     const lon = parseFloat(city.longitude);
-    this.map.setView([lat, lon], 12);
+    this.map.setView([lat, lon], 15);
 
     if (this.selectedMarker) {
       this.map.removeLayer(this.selectedMarker); // Removes previously selected marker
@@ -132,7 +145,84 @@ export class MapComponent implements AfterViewInit, OnInit {
     // Clears the filtered cities and updates the search term with the selected city's name and zipcode
     this.filteredCities = [];
     this.searchTerm = `${city.place} (${city.zipcode})`;
+
+    this.selectedPlaceName = city.place;
+
+    this.loadBezirke(city.place);
   }
+
+  loadBezirke(cityName: string): void {
+    const city = this.cities.find(city => city.place === cityName);
+    const provinceCode = city?.community_code || '';
+  
+    this.http.get<GeoJSON.FeatureCollection | GeoJSON.FeatureCollection[]>('assets/district.geojson').subscribe((geojson) => {
+      this.map.eachLayer((layer) => {
+        // eslint-disable-next-line
+        if (layer instanceof L.GeoJSON) {
+        
+        }
+      });
+  
+      if (this.isFeatureCollection(geojson)) {
+        this.addGeoJSONFeaturesToMap(geojson.features, cityName, provinceCode);
+      } else if (Array.isArray(geojson)) {
+        geojson.forEach((obj) => {
+          if (this.isFeatureCollection(obj)) {
+            this.addGeoJSONFeaturesToMap(obj.features, cityName, provinceCode);
+          }
+        });
+      }
+    });
+  }
+  
+
+  isFeatureCollection(geojson: GeoJSON.FeatureCollection | GeoJSON.FeatureCollection[]): geojson is GeoJSON.FeatureCollection {
+    return (geojson as GeoJSON.FeatureCollection).features !== undefined;
+  }
+
+  addGeoJSONFeaturesToMap(features: GeoJSON.Feature[], cityName: string, provinceCode: string): void {
+  
+    const filteredFeatures = features.filter((feature) => {
+      const geoProvinceCode = feature.properties ? feature.properties['iso'] : '';
+  
+       return geoProvinceCode.startsWith(provinceCode);
+    });
+  
+    if (filteredFeatures.length > 0) {
+
+      if (this.bezirkLayer) {
+        this.map.removeLayer(this.bezirkLayer);
+      }
+
+      this.bezirkLayer = L.geoJSON(filteredFeatures, {
+        style: () => ({
+          color: 'red',
+          weight: 4,
+          fillColor: 'rgba(255,0,0,0.4)',
+          fillOpacity: 0.6
+        }),
+        onEachFeature: (feature, layer) => {
+          if (feature.properties?.name) {
+            layer.bindPopup(feature.properties.name);
+          }
+        }
+      }).addTo(this.map);
+    }
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
   onEnterKey(event: KeyboardEvent): void {
     // Handles the Enter key press in the search input field, selecting a city if a match is found
@@ -146,5 +236,15 @@ export class MapComponent implements AfterViewInit, OnInit {
         this.selectPlace(matchedCity); // Select the matched city
       }
     }
+  }
+
+  normalize(str: string): string {
+    return str
+      .toLowerCase()
+      .normalize('NFD') // ékezetek lebontása
+      .replace(/[\u0300-\u036f]/g, '') // ékezetek eltávolítása
+      .replace(/[^a-z0-9]/g, ' ') // nem betű/szám karakterek eltávolítása
+      .replace(/\s+/g, ' ') // többszörös szóköz csökkentése
+      .trim();
   }
 }
