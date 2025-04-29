@@ -6,7 +6,7 @@
     <div class="d-none d-md-block left-input">
       <input type="text" class="form-control" placeholder="Ort oder Postleitzahl..." [(ngModel)]="searchTerm"
         (input)="onSearchChange()" (keydown)="onEnterKey($event)" />
-      <ul *ngIf="filteredCities.length > 0" class="list-group mt-2">
+      <ul *ngIf="filteredCities.length > 0" class="list-group mt-2" style="max-height: 287px; overflow-y: auto;">
         <li class="list-group-item list-group-item-action" *ngFor="let p of filteredCities" (click)="selectPlace(p)"
           (keydown.enter)="selectPlace(p)" tabindex="0">
           {{ p.place }} ({{ p.zipcode }})
@@ -18,7 +18,7 @@
     <div class="d-block d-md-none container text-center">
       <input type="text" class="form-control mx-auto centered-input" placeholder="Ort oder Postleitzahl..."
         [(ngModel)]="searchTerm" (input)="onSearchChange()" (keydown)="onEnterKey($event)" />
-      <ul *ngIf="filteredCities.length > 0" class="list-group mt-2 mx-auto" style="max-width: 250px;">
+      <ul *ngIf="filteredCities.length > 0" class="list-group mt-2 mx-auto" style="max-width: 250px; max-height: 287px; overflow-y: auto;">
         <li class="list-group-item list-group-item-action" *ngFor="let p of filteredCities" (click)="selectPlace(p)"
           (keydown.enter)="selectPlace(p)" tabindex="0">
           {{ p.place }} ({{ p.zipcode }})
