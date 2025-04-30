@@ -1,0 +1,38 @@
+<div class="side-panel bg-white shadow" [class.collapsed]="isCollapsed">
+    <!-- Toggle button -->
+    <button class="toggle-button" (click)="togglePanel()">
+        <span>{{ isCollapsed ? '>' : '<' }}</span>
+    </button>
+
+    <!-- Panel content -->
+    <div class="panel-content text-nowrap p-5" [class.hidden]="isCollapsed">
+
+        <!-- Search input container -->
+        <div class="position-absolute top-0 start-0 ms-3 mt-3 me-0 w-auto" style="z-index: 1000;">
+
+            <!-- Desktop: left aligned input -->
+            <div class="d-none d-md-block left-input">
+                <input type="text" class="form-control" placeholder="Ort oder Postleitzahl..." [(ngModel)]="searchTerm"
+                    (input)="onSearchChange()" (keydown)="onEnterKey($event)" />
+                <ul *ngIf="filteredCities.length > 0" class="list-group mt-2 list-style">
+                    <li class="list-group-item list-group-item-action" *ngFor="let p of filteredCities"
+                        (click)="selectPlace(p)" (keydown.enter)="selectPlace(p)" tabindex="0">
+                        {{ p.place }} ({{ p.zipcode }})
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Mobile/tablet: centered input -->
+            <div class="d-block d-md-none container text-center">
+                <input type="text" class="form-control mx-auto centered-input" placeholder="Ort oder Postleitzahl..."
+                    [(ngModel)]="searchTerm" (input)="onSearchChange()" (keydown)="onEnterKey($event)" />
+                <ul *ngIf="filteredCities.length > 0" class="list-group mt-2 mx-auto list-style-mobile">
+                    <li class="list-group-item list-group-item-action" *ngFor="let p of filteredCities"
+                        (click)="selectPlace(p)" (keydown.enter)="selectPlace(p)" tabindex="0">
+                        {{ p.place }} ({{ p.zipcode }})
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

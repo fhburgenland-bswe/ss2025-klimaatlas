@@ -1,0 +1,60 @@
+.side-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 20%;
+    transition: width 0.3s ease;
+    box-shadow: 1px 0 6px rgba(0, 0, 0, 0.07);
+    z-index: 1000;
+    overflow: visible;
+}
+
+.side-panel.collapsed {
+    width: 0px;
+}
+
+.toggle-button {
+    position: absolute;
+    top: 50%;
+    right: -30px;
+    transform: translateY(-50%);
+    font-family: monospace;
+    line-height: 1;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    text-align: center;
+    line-height: 28px;
+    cursor: pointer;
+    z-index: 9999;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+
+    .collapsed & {
+        right: -60px;
+    }
+}
+
+.panel-content {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 150ms ease-in, transform 150ms ease-in;
+}
+
+.panel-content.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.list-style {
+    max-height: 287px;
+    overflow-y: auto;
+  }
+  
+  .list-style-mobile {
+    max-width: 250px;
+    max-height: 287px;
+    overflow-y: auto;
+  }

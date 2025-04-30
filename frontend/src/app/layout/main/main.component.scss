@@ -1,0 +1,18 @@
+.wrapper {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+  }
+  
+  app-map {
+    width: 100%;
+    height: 100%;
+  }
+  
+  app-side-panel {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1000;
+  }
+  
