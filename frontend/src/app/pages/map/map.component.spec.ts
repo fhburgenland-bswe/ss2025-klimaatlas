@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import { MapComponent } from './map.component';
 import { City } from '../../interfaces/city-interface';
@@ -63,10 +63,9 @@ describe('MapComponent', () => {
       type: 'FeatureCollection',
       features: []
     };
-    
-    httpMock
-      .expectOne('assets/austria-regions.geojson')
-      .flush(dummyGeo as GeoJSON.FeatureCollection);
+
+    httpMock.expectOne('assets/austria-regions.geojson').flush(dummyGeo);
+    httpMock.verify()
   });
 
   afterEach(() => {
@@ -160,33 +159,48 @@ describe('MapComponent', () => {
   describe('selectPlace', () => {
     beforeEach(() => {
       // always give selectPlace a fake map to avoid Leaflet internals
-      component.map = jasmine.createSpyObj('map', ['setView', 'removeLayer']);
+      component.map = jasmine.createSpyObj('map', ['setView', 'removeLayer', 'eachLayer']);
       component.selectedMarker = undefined;
     });
 
-    it('should remove previously selected marker when one exists', () => {
+    it('should remove previously selected marker when one exists', fakeAsync(() => {
       const oldMarker = {} as L.Marker;
       component.selectedMarker = oldMarker;
-
+  
       const targetCity = mockCities[1];
       component.selectPlace(targetCity);
-
+  
+      // Simulate the async call to district.geojson
+      const req = httpMock.expectOne('assets/district.geojson');
+      req.flush({ type: 'FeatureCollection', features: [] });  // Ensure the request is flushed
+  
+      // Tick to ensure the async operations are completed
+      tick();
+  
       expect(component.map.removeLayer).toHaveBeenCalledWith(oldMarker);
-    });
+    }));
 
-    it('should set view and update searchTerm + clear filteredCities', () => {
+    it('should set view and update searchTerm + clear filteredCities', fakeAsync(() => {
       const targetCity = mockCities[0];
       component.filteredCities = [mockCities[1]];
       component.selectPlace(targetCity);
-
-      // verify map centering
-      expect(component.map.setView)
-        .toHaveBeenCalledWith([parseFloat(targetCity.latitude), parseFloat(targetCity.longitude)], 12);
-
-      // verify searchTerm and dropdown cleared
+  
+      // Simulate the async call to district.geojson
+      const req = httpMock.expectOne('assets/district.geojson');
+      req.flush({ type: 'FeatureCollection', features: [] });  // Ensure the request is flushed
+  
+      // Tick to ensure the async operations are completed
+      tick();
+  
+      // Ensure all HTTP requests have been processed
+      httpMock.verify();
+  
+      // Additional assertions for map behavior
+      expect(component.map.setView).toHaveBeenCalledWith([parseFloat(targetCity.latitude), parseFloat(targetCity.longitude)], 15);
       expect(component.searchTerm).toBe(`${targetCity.place} (${targetCity.zipcode})`);
       expect(component.filteredCities.length).toBe(0);
-    });
+    }));
+    
   });
 
   describe('loadRegions popup binding', () => {
