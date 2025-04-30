@@ -79,4 +79,15 @@ test.describe('Frontend Main Flows', () => {
     await expect(markers).toHaveCount(0);
   });
 
+  test('should show suggestions when typing in search bar', async ({ page }) => {
+    await page.goto('/');
+
+    const searchBar = page.locator('input[placeholder="Ort oder Postleitzahl..."]').first();
+    await searchBar.fill('Wien');
+
+    const suggestions = page.locator('ul.list-group > li.list-group-item');
+    const count = await suggestions.count();
+    expect(count).toBeGreaterThan(0);
+  });
+
 });
