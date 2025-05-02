@@ -4,7 +4,7 @@
     left: 0;
     height: 100vh;
     width: 20%;
-    transition: width 0.3s ease;
+    transition: width 0.6s ease;
     box-shadow: 1px 0 6px rgba(0, 0, 0, 0.07);
     z-index: 1000;
     overflow: visible;
@@ -12,6 +12,23 @@
 
 .side-panel.collapsed {
     width: 0px;
+}
+
+.side-panel-content {
+    transition: opacity 0.4s ease-in-out, filter 0.5s ease-in-out;
+    opacity: 1;
+    filter: blur(0px);
+    pointer-events: auto;
+}
+
+.side-panel-content.collapsed {
+    opacity: 0;
+    filter: blur(2px);
+    pointer-events: none;
+}
+
+.toggle-button-container {
+    margin-top: auto;
 }
 
 .toggle-button {
@@ -37,24 +54,70 @@
     }
 }
 
-.panel-content {
-    opacity: 1;
-    transform: translateY(0);
-    transition: opacity 150ms ease-in, transform 150ms ease-in;
+@media (max-width: 576px) {
+    .side-panel {
+        background-color: white;
+        position: fixed;
+        left: 0 !important;
+        right: 0 !important;
+        top: 10% !important;
+        bottom: 0 !important;
+        height: 100vh !important;
+        width: 100vw !important;
+        transform: translateY(100%);
+        transition: transform 0.4s ease;
+        box-shadow: 1px 0 6px rgba(0, 0, 0, 0.07);
+        z-index: 1000;
+        overflow: visible;
+    }
+
+    .side-panel.mobile:not(.collapsed) {
+        transform: translateY(0%);
+    }
+
+    .side-panel.mobile.collapsed {
+        transform: translateY(100%);
+    }
+
+    .toggle-button {
+        position: fixed;
+        top: 90%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: monospace;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        text-align: center;
+        cursor: pointer;
+        z-index: 9999;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-group-mobile-bottom {
+        justify-content: center;
+        width: 70%;
+        z-index: 9999;
+    }
 }
 
-.panel-content.hidden {
-    opacity: 0;
-    pointer-events: none;
+@media (max-width: 992px) {
+    .side-panel {
+        width: 40%;
+    }
 }
 
-.list-style {
-    max-height: 287px;
+@media (max-width: 1200px) {
+    .side-panel {
+        width: 50%;
+    }
+}
+
+.overflow-auto {
     overflow-y: auto;
-  }
-  
-  .list-style-mobile {
-    max-width: 250px;
-    max-height: 287px;
-    overflow-y: auto;
-  }
+}

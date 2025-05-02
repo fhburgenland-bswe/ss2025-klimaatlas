@@ -1,82 +1,37 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { City } from '../../interfaces/city-interface';
-import { MapService } from '../../services/map.service';
-import * as L from 'leaflet';
+import { SourcesComponent } from "./pages/sources/sources.component";
+import { ContentComponent } from "./pages/content/content.component";
 
 @Component({
   selector: 'app-side-panel',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SourcesComponent, ContentComponent],
   templateUrl: './side-panel.component.html',
-  styleUrls: ['./side-panel.component.scss']
+  styleUrls: ['./side-panel.component.scss'],
 })
-export class SidePanelComponent implements OnInit {
-  searchTerm = '';
+export class SidePanelComponent implements OnInit{
   isCollapsed = false;
-  cities: City[] = [];
-  filteredCities: City[] = [];
-  selectedMarker?: L.Marker;
-
-  constructor(private mapService: MapService) { }
+  activePanel: 'content' | 'sources' = 'content';
+  isMobile = false;
 
   ngOnInit(): void {
-    this.mapService.getCities().subscribe(data => {
-      this.cities = data;
-    });
+    this.checkViewport();
   }
 
-  togglePanel(): void {
+@HostListener('window:resize')
+checkViewport() {
+    this.isMobile = window.innerWidth <= 768;
+    if (this.isMobile) {
+        document.body.style.overflow = this.isCollapsed ? 'hidden' : 'auto';
+    }
+}
+
+  togglePanel() {
     this.isCollapsed = !this.isCollapsed;
   }
 
-  onSearchChange(): void {
-    const term = this.searchTerm.toLowerCase();
-    if (term.length < 2) {
-      this.filteredCities = [];
-      return;
-    }
-
-    this.filteredCities = this.cities.filter(p =>
-      p.place.toLowerCase().includes(term) || p.zipcode.includes(term)
-    );
-  }
-
-  selectPlace(city: City): void {
-    const lat = parseFloat(city.latitude);
-    const lon = parseFloat(city.longitude);
-    const map = this.mapService.getMap();
-    if (!map) return;
-
-    map.setView([lat, lon], 15);
-
-    if (this.selectedMarker) {
-      map.removeLayer(this.selectedMarker);
-    }
-
-    this.selectedMarker = L.marker([lat, lon])
-      .addTo(map)
-      .bindPopup(`${city.place} (${city.zipcode})`)
-      .openPopup();
-
-    this.filteredCities = [];
-    this.searchTerm = `${city.place} (${city.zipcode})`;
-    console.log(city);
-    
-    this.mapService.loadDistricts(city);
-  }
-
-  onEnterKey(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      const term = this.searchTerm.toLowerCase();
-      const matchedCity = this.cities.find(p =>
-        p.place.toLowerCase() === term || p.zipcode === term
-      );
-
-      if (matchedCity) {
-        this.selectPlace(matchedCity);
-      }
-    }
+  showPanel(panel: 'content' | 'sources') {
+    this.activePanel = panel;
   }
 }

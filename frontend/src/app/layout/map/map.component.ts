@@ -14,31 +14,36 @@ import { MapService } from '../../services/map.service';
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements AfterViewInit, OnDestroy {
-  public map!: L.Map; 
-  private central: L.LatLngExpression = [47.75, 13.5];
+  public map!: L.Map;
+  private central: L.LatLngExpression = [47.75, 13.0];
   private bounds: L.LatLngBoundsExpression = [
     [44.5, 6.5],
     [51.0, 20.5]
   ];
 
-
   constructor(private http: HttpClient, private mapService: MapService) { }
-
   ngAfterViewInit(): void {
     this.initMap();
 
     this.map.on('focus', () => {
       const container = this.map.getContainer();
-      container.addEventListener('wheel', (e: WheelEvent) => {
-        if (e.ctrlKey) {
-          this.map.scrollWheelZoom.enable();
-        } else {
-          this.map.scrollWheelZoom.disable();
-        }
-      });
+      container.addEventListener('wheel', this.handleMapScroll.bind(this));
+    });
+
+    this.map.on('blur', () => {
+      const container = this.map.getContainer();
+      container.removeEventListener('wheel', this.handleMapScroll.bind(this));
     });
 
     this.loadRegions();
+  }
+
+  handleMapScroll(event: WheelEvent): void {
+    if (event.ctrlKey) {
+      this.map.scrollWheelZoom.enable();
+    } else {
+      this.map.scrollWheelZoom.disable();
+    }
   }
 
   ngOnDestroy(): void {

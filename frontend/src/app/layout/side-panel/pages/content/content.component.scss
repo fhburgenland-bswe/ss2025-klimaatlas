@@ -1,0 +1,24 @@
+html,
+body,
+* {
+  cursor: default;
+}
+
+input {
+  cursor: pointer;
+}
+
+input:focus {
+  cursor: text;
+}
+
+.list-style {
+  max-height: 287px;
+  overflow-y: auto;
+}
+
+.list-style-mobile {
+  max-width: 250px;
+  max-height: 287px;
+  overflow-y: auto;
+}

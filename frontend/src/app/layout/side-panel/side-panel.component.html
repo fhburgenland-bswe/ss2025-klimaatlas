@@ -1,38 +1,54 @@
-<div class="side-panel bg-white shadow" [class.collapsed]="isCollapsed">
+<!-- DESKTOP -->
+<div class="side-panel d-flex flex-column bg-white shadow" *ngIf=!isMobile [class.collapsed]="isCollapsed">
+
+    <!-- Panel switching -->
+    <div class="p-3 side-panel-content" [class.collapsed]="isCollapsed">
+        <app-content *ngIf="activePanel === 'content'"></app-content>
+        <app-sources *ngIf="activePanel === 'sources'"></app-sources>
+    </div>
+
+    <!-- Tab nav for content/sources -->
+    <div class="toggle-button-container">
+        <div class="btn-group m-3 justify-content-center d-flex" role="group" *ngIf="!isCollapsed">
+            <button type="button" class="btn btn-outline-secondary" [class.active]="activePanel === 'content'"
+                (click)="showPanel('content')">
+                Content
+            </button>
+            <button type="button" class="btn btn-outline-secondary" [class.active]="activePanel === 'sources'"
+                (click)="showPanel('sources')">
+                Sources
+            </button>
+        </div>
+    </div>
+
     <!-- Toggle button -->
-    <button class="toggle-button" (click)="togglePanel()">
+    <button class="toggle-button text-center" (click)="togglePanel()" [class.collapsed]="isCollapsed">
         <span>{{ isCollapsed ? '>' : '<' }}</span>
     </button>
 
-    <!-- Panel content -->
-    <div class="panel-content text-nowrap p-5" [class.hidden]="isCollapsed">
+</div>
 
-        <!-- Search input container -->
-        <div class="position-absolute top-0 start-0 ms-3 mt-3 me-0 w-auto" style="z-index: 1000;">
+<!-- MOBILE -->
+<div *ngIf="isMobile" class="d-flex flex-column h-100">
+    <div class="side-panel d-flex flex-column mobile" [class.collapsed]="isCollapsed">
+        <div class="p-3 overflow-auto" [ngClass]="{ 'fade-hidden': activePanel !== 'content' }">
+            <app-content *ngIf="activePanel === 'content'"></app-content>
+            <app-sources *ngIf="activePanel === 'sources'"></app-sources>
+        </div>
 
-            <!-- Desktop: left aligned input -->
-            <div class="d-none d-md-block left-input">
-                <input type="text" class="form-control" placeholder="Ort oder Postleitzahl..." [(ngModel)]="searchTerm"
-                    (input)="onSearchChange()" (keydown)="onEnterKey($event)" />
-                <ul *ngIf="filteredCities.length > 0" class="list-group mt-2 list-style">
-                    <li class="list-group-item list-group-item-action" *ngFor="let p of filteredCities"
-                        (click)="selectPlace(p)" (keydown.enter)="selectPlace(p)" tabindex="0">
-                        {{ p.place }} ({{ p.zipcode }})
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Mobile/tablet: centered input -->
-            <div class="d-block d-md-none container text-center">
-                <input type="text" class="form-control mx-auto centered-input" placeholder="Ort oder Postleitzahl..."
-                    [(ngModel)]="searchTerm" (input)="onSearchChange()" (keydown)="onEnterKey($event)" />
-                <ul *ngIf="filteredCities.length > 0" class="list-group mt-2 mx-auto list-style-mobile">
-                    <li class="list-group-item list-group-item-action" *ngFor="let p of filteredCities"
-                        (click)="selectPlace(p)" (keydown.enter)="selectPlace(p)" tabindex="0">
-                        {{ p.place }} ({{ p.zipcode }})
-                    </li>
-                </ul>
-            </div>
+        <div class="btn-group m-auto w-100 d-flex justify-content-center align-items-center btn-group-mobile-bottom" *ngIf="!isCollapsed">
+            <button class="btn btn-outline-secondary" [class.active]="activePanel === 'content'"
+                (click)="showPanel('content')">
+                Content
+            </button>
+            <button class="btn btn-outline-secondary" [class.active]="activePanel === 'sources'"
+                (click)="showPanel('sources')">
+                Sources
+            </button>
         </div>
     </div>
+
+    <button class="toggle-button" (click)="togglePanel()">
+        {{ isCollapsed ? '↑' : '↓' }}
+    </button>
 </div>
