@@ -6,7 +6,9 @@
             </h2>
             <ul class="sources-list mt-3">
                 <li *ngFor="let item of sources">
-                    {{ item }}
+                    <a [href]="item.url" target="_blank" rel="noopener noreferrer">
+                        {{ item.label }}
+                    </a>
                 </li>
             </ul>
         </div>

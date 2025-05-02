@@ -9,10 +9,8 @@ import { Component } from '@angular/core';
 })
 export class SourcesComponent {
   sources = [
-    'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-    'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-    'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.',
-    'Duis aute irure dolor in reprehenderit in voluptate velit esse.',
-    'Excepteur sint occaecat cupidatat non proident.'
+    { url: 'https://www.openstreetmap.org/#map=8/47.184/19.509', label: 'OpenStreetMap' },
+    { url: 'https://data.hub.geosphere.at/', label: 'Geosphere'},
+    { url: 'https://data.hub.geosphere.at/dataset/spartacus-v2-1d-1km', label: 'Spartacus' }
   ];
 }
