@@ -57,7 +57,7 @@ describe('MapComponent', () => {
   }));
 
   it('should load and render GeoJSON regions', fakeAsync(() => {
-    fixture.detectChanges(); // ez meghívja ngAfterViewInit
+    fixture.detectChanges();
 
     const req = httpMock.expectOne('assets/austria-regions.geojson');
     expect(req.request.method).toBe('GET');
