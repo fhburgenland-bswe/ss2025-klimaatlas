@@ -1,6 +1,11 @@
 package at.big5health.klimaatlas.grid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 @Component
@@ -11,6 +16,8 @@ public class GridUtil {
     // Meters per degree longitude depends on latitude
     private static final double METERS_PER_DEGREE_LONGITUDE_AT_EQUATOR = 111319.488;
     private static final double CELL_SIZE_METERS = 1000.0; // 1km
+
+    private static final Logger logger = LoggerFactory.getLogger(GridUtil.class);
 
 
     public GridCellInfo getGridCellForCoordinates(double latitude, double longitude) {
@@ -71,4 +78,33 @@ public class GridUtil {
 
         return new GridCellInfo(cellId, bbox, targetLatitude, targetLongitude);
     }
+
+    public List<GridCellInfo> generateGrid(BoundingBox boundingBox, double gridResolution) {
+
+        List<GridCellInfo> gridCells = new ArrayList<>();
+
+        logger.info("Generating grid for BoundingBox: {} with resolution: {}",
+                boundingBox.toApiString(), gridResolution);
+
+        // Berechne die Anzahl der Schritte in jede Richtung
+        double minLat = boundingBox.getMinLat();
+        double maxLat = boundingBox.getMaxLat();
+        double minLon = boundingBox.getMinLon();
+        double maxLon = boundingBox.getMaxLon();
+
+        // Berechne Punkte im Gitter
+        for (double lat = minLat; lat <= maxLat; lat += gridResolution) {
+            for (double lon = minLon; lon <= maxLon; lon += gridResolution) {
+                // Erzeuge eine GridCellInfo für diesen Punkt
+                GridCellInfo cell = getGridCellForCoordinates(lat, lon);
+                gridCells.add(cell);
+
+            }
+        }
+
+        logger.info("Generated {} grid cells", gridCells.size());
+        return gridCells;
+
+    }
+
 }
