@@ -4,9 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 @Component
 public class GridUtil {
@@ -86,19 +84,18 @@ public class GridUtil {
         logger.info("Generating grid for BoundingBox: {} with resolution: {}",
                 boundingBox.toApiString(), gridResolution);
 
-        // Berechne die Anzahl der Schritte in jede Richtung
         double minLat = boundingBox.getMinLat();
         double maxLat = boundingBox.getMaxLat();
         double minLon = boundingBox.getMinLon();
         double maxLon = boundingBox.getMaxLon();
+        Set<String> seen = new HashSet<>();
 
-        // Berechne Punkte im Gitter
         for (double lat = minLat; lat <= maxLat; lat += gridResolution) {
             for (double lon = minLon; lon <= maxLon; lon += gridResolution) {
-                // Erzeuge eine GridCellInfo für diesen Punkt
                 GridCellInfo cell = getGridCellForCoordinates(lat, lon);
-                gridCells.add(cell);
-
+                if (seen.add(cell.getCellId())) {
+                    gridCells.add(cell);
+                }
             }
         }
 

@@ -20,9 +20,6 @@ public class CacheConfig {
         ConcurrentMapCacheManager manager = new ConcurrentMapCacheManager();
         manager.setAllowNullValues(false);
 
-        // Cache-Regionen definieren:
-        // - weatherCache: Für individuelle Wetterdatenabfragen
-        // - temperatureGrid: Für das Temperatur-Raster pro Bundesland
         manager.setCacheNames(Arrays.asList("weatherCache", "temperatureGrid"));
 
         return manager;
@@ -31,10 +28,9 @@ public class CacheConfig {
     @Bean
     public TaskScheduler taskScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(5); // Anzahl der Threads für parallele geplante Aufgaben
+        scheduler.setPoolSize(5);
         scheduler.setThreadNamePrefix("scheduled-task-");
         scheduler.setErrorHandler(t -> {
-            // Fehlerbehandlung für geplante Aufgaben
             System.err.println("Error in scheduled task: " + t.getMessage());
             t.printStackTrace();
         });

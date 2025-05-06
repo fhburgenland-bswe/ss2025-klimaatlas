@@ -25,9 +25,8 @@ import java.util.List;
 @AllArgsConstructor
 public class WeatherController {
 
-    @Autowired
     private final WeatherService weatherService;
-    private GridCacheService gridCacheService;
+    private final GridCacheService gridCacheService;
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
