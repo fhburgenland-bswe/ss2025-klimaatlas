@@ -6,6 +6,7 @@ import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.exceptions.ErrorMessages;
 import at.big5health.klimaatlas.exceptions.ExternalApiException;
 import at.big5health.klimaatlas.exceptions.WeatherDataNotFoundException;
+import at.big5health.klimaatlas.services.GridCacheService;
 import at.big5health.klimaatlas.services.WeatherService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ class WeatherControllerTest {
 
     @MockitoBean // Create a mock bean for WeatherService in the application context
     private WeatherService weatherService;
+
+    @MockitoBean
+    private GridCacheService gridCacheService;
 
     @Autowired
     private ObjectMapper objectMapper; // For JSON assertions if needed
