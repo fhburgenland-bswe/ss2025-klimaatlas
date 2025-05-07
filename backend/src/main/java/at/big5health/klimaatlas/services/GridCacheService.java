@@ -4,14 +4,16 @@ import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.grid.BoundingBox;
 import at.big5health.klimaatlas.grid.GridCellInfo;
 import at.big5health.klimaatlas.grid.GridUtil;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
@@ -39,21 +41,25 @@ public class GridCacheService {
     @Autowired
     private CacheManager cacheManager;
 
+    @Autowired
+    @Lazy
+    private GridCacheService selfProxy;
+
     private final Map<String, BoundingBox> austrianStates = new HashMap<String, BoundingBox>() {{
-        put("Niederösterreich", new BoundingBox(47.4, 48.7, 14.4, 17.2));
-        put("Wien", new BoundingBox(48.1, 48.3, 16.2, 16.6));
-        put("Burgenland", new BoundingBox(46.7, 48.1, 16.0, 17.2));
-        put("Steiermark", new BoundingBox(46.6, 47.9, 13.6, 16.2));
-        put("Oberösterreich", new BoundingBox(47.4, 48.8, 12.7, 14.9));
-        put("Salzburg", new BoundingBox(46.8, 47.9, 12.5, 13.8));
-        put("Kärnten", new BoundingBox(46.4, 47.2, 12.6, 15.0));
-        put("Tirol", new BoundingBox(46.6, 47.8, 10.0, 13.0));
-        put("Vorarlberg", new BoundingBox(46.8, 47.6, 9.5, 10.3));
+        put("Niederösterreich", new BoundingBox(47.4, 14.4, 48.7, 17.2));
+        put("Wien", new BoundingBox(48.1, 16.2, 48.3, 16.6));
+        put("Burgenland", new BoundingBox(46.7, 16.0, 48.1,17.2));
+        put("Steiermark", new BoundingBox(46.6, 13.6, 47.9, 16.2));
+        put("Oberösterreich", new BoundingBox(47.4, 12.7, 48.8, 14.9));
+        put("Salzburg", new BoundingBox(46.8, 12.5, 47.9,13.8));
+        put("Kärnten", new BoundingBox(46.4, 12.6, 47.2, 15.0));
+        put("Tirol", new BoundingBox(46.6, 10.0, 47.8, 13.0));
+        put("Vorarlberg", new BoundingBox(46.8, 9.5, 47.6,10.3));
     }};
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
-    @PostConstruct
+    @EventListener(ApplicationReadyEvent.class)
     public void initializeGridCache() {
         LOGGER.info("Initializing temperature grid cache for all Austrian states");
 
@@ -63,7 +69,7 @@ public class GridCacheService {
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
                     LOGGER.info("Loading temperature grid for state: {}", state.getKey());
-                    getTemperatureGridForState(state.getKey());
+                    selfProxy.getTemperatureGridForState(state.getKey());
                     LOGGER.info("Successfully loaded temperature grid for state: {}", state.getKey());
                 } catch (Exception e) {
                     LOGGER.error("Failed to load temperature grid for state: {}", state.getKey(), e);
@@ -91,14 +97,24 @@ public class GridCacheService {
             throw new IllegalArgumentException("Unknown state: " + stateName);
         }
 
-        double gridResolution = 0.1;
+        double gridResolution = 1.0; // 0.1 = too many requests
         List<GridCellInfo> gridCells = gridUtil.generateGrid(boundingBox, gridResolution);
+
+        if (gridCells.isEmpty()) {
+            LOGGER.warn("No grid cells generated for state: {}. Using fallback approach.", stateName);
+            double centerLat = (boundingBox.getMinLat() + boundingBox.getMaxLat()) / 2.0;
+            double centerLon = (boundingBox.getMinLon() + boundingBox.getMaxLon()) / 2.0;
+            GridCellInfo centerCell = gridUtil.getGridCellForCoordinates(centerLat, centerLon);
+            gridCells.add(centerCell);
+        }
 
         List<GridTemperature> gridTemperatures = new ArrayList<>();
         LocalDate today = LocalDate.now();
 
         for (GridCellInfo cell : gridCells) {
+
             try {
+                LOGGER.debug("Fetching weather for Lat={}, Lon={}", cell.getTargetLatitude(), cell.getTargetLongitude());
 
                 double lat = cell.getTargetLatitude();
                 double lon = cell.getTargetLongitude();
@@ -149,6 +165,5 @@ public class GridCacheService {
     public void shutdown() {
         executorService.shutdown();
     }
-
 
 }
