@@ -1,0 +1,62 @@
+<!-- Search input container -->
+<div class="position-relative w-100 mt-3">
+  <!-- Desktop input -->
+  <div class="d-none d-md-block left-input">
+    <input type="text" class="form-control" placeholder="Ort oder Postleitzahl..." [(ngModel)]="searchTerm"
+      (input)="onSearchChange()" (keydown)="onEnterKey($event)" />
+    <ul *ngIf="filteredCities.length > 0" class="list-group mt-2 list-style">
+      <li class="list-group-item list-group-item-action" *ngFor="let p of filteredCities" (click)="selectPlace(p)"
+        (keydown.enter)="selectPlace(p)" tabindex="0">
+        {{ p.place }} ({{ p.zipcode }})
+      </li>
+    </ul>
+  </div>
+
+  <!-- Mobile/tablet input -->
+  <div class="d-block d-md-none text-center">
+    <input type="text" class="form-control mx-auto centered-input" placeholder="Ort oder Postleitzahl..."
+      [(ngModel)]="searchTerm" (input)="onSearchChange()" (keydown)="onEnterKey($event)" />
+    <ul *ngIf="filteredCities.length > 0" class="list-group mt-2 mx-auto list-style-mobile">
+      <li class="list-group-item list-group-item-action" *ngFor="let p of filteredCities" (click)="selectPlace(p)"
+        (keydown.enter)="selectPlace(p)" tabindex="0">
+        {{ p.place }} ({{ p.zipcode }})
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Additional content -->
+<div class="d-flex mt-4 p-2">
+  <div class="row">
+    <div class="col-md-12 panel-content" [ngClass]="{ 'hidden': isCollapsed }">
+      <h2>
+        Temperature
+      </h2>
+      <p>
+        Lorem ipsum dolor sit amet consectetur, adipisicing elit. Nam amet fugit necessitatibus libero culpa
+        numquam at iste ut ipsum. Maxime quaerat minus quis ullam laboriosam praesentium ab provident itaque
+        quo.
+      </p>
+    </div>
+    <div class="col-md-12 panel-content" [ngClass]="{ 'hidden': isCollapsed }">
+      <h2>
+        Health status
+      </h2>
+      <p>
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Id in exercitationem, molestias voluptatum
+        repudiandae distinctio, quidem suscipit quasi ipsam, nam laboriosam sit delectus doloribus quo
+        deleniti ea. Sint, nisi mollitia?
+      </p>
+    </div>
+    <div class="col-md-12 panel-content" [ngClass]="{ 'hidden': isCollapsed }">
+      <h2>
+        Health risks
+      </h2>
+      <p>
+        Lorem ipsum dolor sit amet consectetur adipisicing elit. Illum qui, sed debitis dolorem soluta alias
+        provident ipsum vero eos quos itaque voluptatum voluptas maiores, suscipit vel praesentium, nam
+        veniam assumenda?
+      </p>
+    </div>
+  </div>
+</div>
