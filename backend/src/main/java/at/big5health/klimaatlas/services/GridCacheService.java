@@ -31,10 +31,10 @@ public class GridCacheService {
     public record GridTemperature(double latitude, double longitude, double temperature) {}
 
     @Autowired
-    private WeatherService weatherService;
+    protected WeatherService weatherService;
 
     @Autowired
-    private GridUtil gridUtil;
+    protected GridUtil gridUtil;
 
     @Autowired
     private CacheManager cacheManager;
