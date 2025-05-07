@@ -4,8 +4,8 @@ import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.grid.BoundingBox;
 import at.big5health.klimaatlas.grid.GridCellInfo;
 import at.big5health.klimaatlas.grid.GridUtil;
-import at.big5health.klimaatlas.models.WeatherReport;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +28,8 @@ public class GridCacheService {
 
     private static final Logger logger = LoggerFactory.getLogger(GridCacheService.class);
 
+    public record GridTemperature(double latitude, double longitude, double temperature) {}
+
     @Autowired
     private WeatherService weatherService;
 
@@ -37,7 +39,6 @@ public class GridCacheService {
     @Autowired
     private CacheManager cacheManager;
 
-    // Definition der österreichischen Bundesländer mit deren Bounding Boxes
     private final Map<String, BoundingBox> austrianStates = new HashMap<String, BoundingBox>() {{
         put("Niederösterreich", new BoundingBox(47.4, 48.7, 14.4, 17.2));
         put("Wien", new BoundingBox(48.1, 48.3, 16.2, 16.6));
@@ -52,12 +53,10 @@ public class GridCacheService {
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
-    // Diese Methode wird beim Start der Anwendung ausgeführt
     @PostConstruct
     public void initializeGridCache() {
         logger.info("Initializing temperature grid cache for all Austrian states");
 
-        // Parallel laden der Daten für alle Bundesländer
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (Map.Entry<String, BoundingBox> state : austrianStates.entrySet()) {
@@ -74,12 +73,10 @@ public class GridCacheService {
             futures.add(future);
         }
 
-        // Warten bis alle Daten geladen sind (optional)
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         logger.info("Temperature grid cache initialization completed");
     }
 
-    // Diese Methode wird jeden Tag um 10:00 Uhr ausgeführt
     @Scheduled(cron = "0 0 10 * * ?")
     @CacheEvict(value = "temperatureGrid", allEntries = true)
     public void refreshCache() {
@@ -94,9 +91,7 @@ public class GridCacheService {
             throw new IllegalArgumentException("Unknown state: " + stateName);
         }
 
-        // Berechne ein Raster von Punkten innerhalb der Bounding Box
-        // mit einer angemessenen Auflösung (z.B. alle 0.1 Grad)
-        double gridResolution = 0.1; // ca. 10km
+        double gridResolution = 0.1;
         List<GridCellInfo> gridCells = gridUtil.generateGrid(boundingBox, gridResolution);
 
         List<GridTemperature> gridTemperatures = new ArrayList<>();
@@ -104,15 +99,12 @@ public class GridCacheService {
 
         for (GridCellInfo cell : gridCells) {
             try {
-                // Verwende die getWeather-Methode statt getWeatherReport
+
                 double lat = cell.getTargetLatitude();
                 double lon = cell.getTargetLongitude();
 
-                // Angepasst an die vorhandene WeatherService API
                 WeatherReportDTO report = weatherService.getWeather(null, lon, lat, today);
 
-                // Extrahiere die Temperatur aus dem WeatherReportDTO
-                // Verwende den Mittelwert aus Min und Max, wenn verfügbar
                 Double temperature = null;
                 if (report.getMinTemp() != null && report.getMaxTemp() != null) {
                     temperature = (report.getMinTemp() + report.getMaxTemp()) / 2.0;
@@ -129,7 +121,6 @@ public class GridCacheService {
                             temperature));
                 }
             } catch (Exception e) {
-                // Fehler protokollieren, aber weitermachen
                 logger.warn("Could not fetch temperature data for point {}, {}",
                         cell.getTargetLatitude(), cell.getTargetLongitude(), e);
             }
@@ -142,40 +133,22 @@ public class GridCacheService {
         List<GridTemperature> allPoints = new ArrayList<>();
 
         for (String state : austrianStates.keySet()) {
-            try {
-                List<GridTemperature> statePoints = getTemperatureGridForState(state);
-                allPoints.addAll(statePoints);
-            } catch (Exception e) {
-                logger.error("Error retrieving temperature grid for state: {}", state, e);
+            List cached = cacheManager.getCache("temperatureGrid")
+                    .get(state, List.class);
+            if (cached != null) {
+                allPoints.addAll(cached);
+            } else {
+                logger.warn("No cached temperature grid for state: {}", state);
             }
         }
-
         return allPoints;
+
     }
 
-    // Innere Klasse zur Repräsentation eines Temperaturpunktes im Raster
-    public static class GridTemperature {
-        private final double latitude;
-        private final double longitude;
-        private final double temperature;
-
-        public GridTemperature(double latitude, double longitude, double temperature) {
-            this.latitude = latitude;
-            this.longitude = longitude;
-            this.temperature = temperature;
-        }
-
-        public double getLatitude() {
-            return latitude;
-        }
-
-        public double getLongitude() {
-            return longitude;
-        }
-
-        public double getTemperature() {
-            return temperature;
-        }
+    @PreDestroy
+    public void shutdown() {
+        executorService.shutdown();
     }
+
 
 }
