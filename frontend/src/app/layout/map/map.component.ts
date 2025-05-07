@@ -23,7 +23,14 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
   constructor(private http: HttpClient, private mapService: MapService) { }
   ngAfterViewInit(): void {
+    // eslint-disable-next-line
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
     this.initMap();
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'assets/img/marker-icon-2x.png',
+      iconUrl: 'assets/img/marker-icon-2x.png',
+      shadowUrl: 'assets/img/marker-shadow.png'
+    });
 
     this.map.on('focus', () => {
       const container = this.map.getContainer();
