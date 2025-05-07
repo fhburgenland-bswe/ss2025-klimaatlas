@@ -68,8 +68,10 @@ public class GridCacheService {
         for (Map.Entry<String, BoundingBox> state : austrianStates.entrySet()) {
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
+
                     LOGGER.info("Loading temperature grid for state: {}", state.getKey());
-                    selfProxy.getTemperatureGridForState(state.getKey());
+                    // for testing ...
+                    // selfProxy.getTemperatureGridForState(state.getKey());
                     LOGGER.info("Successfully loaded temperature grid for state: {}", state.getKey());
                 } catch (Exception e) {
                     LOGGER.error("Failed to load temperature grid for state: {}", state.getKey(), e);
