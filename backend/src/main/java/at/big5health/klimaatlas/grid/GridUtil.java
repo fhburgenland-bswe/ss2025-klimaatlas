@@ -79,8 +79,6 @@ public class GridUtil {
 
     public List<GridCellInfo> generateGrid(BoundingBox boundingBox, double gridResolution) {
         List<GridCellInfo> gridCells = new ArrayList<>();
-        LOGGER.info("Generating grid for BoundingBox: {} with resolution: {}",
-                boundingBox.toApiString(), gridResolution);
 
         double minLat = boundingBox.getMinLat();
         double maxLat = boundingBox.getMaxLat();
@@ -89,27 +87,15 @@ public class GridUtil {
         Set<String> seen = new HashSet<>();
 
         double latSpacingDegrees = gridResolution / METERS_PER_DEGREE_LATITUDE;
-        LOGGER.info("Generating grid - minLat={}, maxLat={}, latSpacing={}", minLat, maxLat, latSpacingDegrees);
         int numLatCells = (int) Math.ceil((maxLat - minLat) / latSpacingDegrees);
-        LOGGER.info("numLatCells = {}", numLatCells);
 
         for (int i = 0; i < numLatCells; i++) {
-            LOGGER.info("Outer loop: i={}, minLat={}, maxLat={}, latSpacing={}",
-                    i, minLat, maxLat, latSpacingDegrees);
             double centerLat = minLat + (i + 0.5) * latSpacingDegrees;
-            LOGGER.info("centerLat = {}", centerLat);
             double lonSpacingDegreesAtCurrentLat = gridResolution / (METERS_PER_DEGREE_LONGITUDE_AT_EQUATOR * Math.cos(Math.toRadians(centerLat)));
-            LOGGER.info("centerLat = {}", centerLat);
-            LOGGER.info("Generating grid - minLon={}, maxLon={}, lonSpacingAtLat={}", minLon, maxLon, lonSpacingDegreesAtCurrentLat);
             int numLonCells = (int) Math.ceil((maxLon - minLon) / lonSpacingDegreesAtCurrentLat);
-            LOGGER.info("numLonCells = {}", numLonCells);
 
             for (int j = 0; j < numLonCells; j++) {
-                LOGGER.info("Inner loop: j={}, minLon={}, maxLon={}, lonSpacing={}",
-                        j, minLon, maxLon, lonSpacingDegreesAtCurrentLat);
                 double centerLon = minLon + (j + 0.5) * lonSpacingDegreesAtCurrentLat;
-                LOGGER.info("centerLat = {}", centerLat);
-                LOGGER.info("centerLon = {}", centerLon);
                 if (centerLat >= minLat && centerLat <= maxLat && centerLon >= minLon && centerLon <= maxLon) {
                     GridCellInfo cell = getGridCellForCoordinates(centerLat, centerLon);
                     if (seen.add(cell.getCellId())) {

@@ -97,7 +97,7 @@ public class GridCacheService {
             throw new IllegalArgumentException("Unknown state: " + stateName);
         }
 
-        double gridResolution = 1.0; // 0.1 = too many requests
+        double gridResolution = 500.0; // 0.1 - 1.0  = too many requests
         List<GridCellInfo> gridCells = gridUtil.generateGrid(boundingBox, gridResolution);
 
         if (gridCells.isEmpty()) {
@@ -114,11 +114,8 @@ public class GridCacheService {
         for (GridCellInfo cell : gridCells) {
 
             try {
-                LOGGER.debug("Fetching weather for Lat={}, Lon={}", cell.getTargetLatitude(), cell.getTargetLongitude());
-
                 double lat = cell.getTargetLatitude();
                 double lon = cell.getTargetLongitude();
-
                 WeatherReportDTO report = weatherService.getWeather(null, lon, lat, today);
 
                 Double temperature = null;
