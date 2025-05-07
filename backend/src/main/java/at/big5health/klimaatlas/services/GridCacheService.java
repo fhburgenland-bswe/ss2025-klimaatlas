@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 @Service
 public class GridCacheService {
 
-    private static final Logger logger = LoggerFactory.getLogger(GridCacheService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GridCacheService.class);
 
     public record GridTemperature(double latitude, double longitude, double temperature) {}
 
@@ -55,18 +55,18 @@ public class GridCacheService {
 
     @PostConstruct
     public void initializeGridCache() {
-        logger.info("Initializing temperature grid cache for all Austrian states");
+        LOGGER.info("Initializing temperature grid cache for all Austrian states");
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (Map.Entry<String, BoundingBox> state : austrianStates.entrySet()) {
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 try {
-                    logger.info("Loading temperature grid for state: {}", state.getKey());
+                    LOGGER.info("Loading temperature grid for state: {}", state.getKey());
                     getTemperatureGridForState(state.getKey());
-                    logger.info("Successfully loaded temperature grid for state: {}", state.getKey());
+                    LOGGER.info("Successfully loaded temperature grid for state: {}", state.getKey());
                 } catch (Exception e) {
-                    logger.error("Failed to load temperature grid for state: {}", state.getKey(), e);
+                    LOGGER.error("Failed to load temperature grid for state: {}", state.getKey(), e);
                 }
             }, executorService);
 
@@ -74,13 +74,13 @@ public class GridCacheService {
         }
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        logger.info("Temperature grid cache initialization completed");
+        LOGGER.info("Temperature grid cache initialization completed");
     }
 
     @Scheduled(cron = "0 0 10 * * ?")
     @CacheEvict(value = "temperatureGrid", allEntries = true)
     public void refreshCache() {
-        logger.info("Refreshing temperature grid cache");
+        LOGGER.info("Refreshing temperature grid cache");
         initializeGridCache();
     }
 
@@ -121,7 +121,7 @@ public class GridCacheService {
                             temperature));
                 }
             } catch (Exception e) {
-                logger.warn("Could not fetch temperature data for point {}, {}",
+                LOGGER.warn("Could not fetch temperature data for point {}, {}",
                         cell.getTargetLatitude(), cell.getTargetLongitude(), e);
             }
         }
@@ -138,7 +138,7 @@ public class GridCacheService {
             if (cached != null) {
                 allPoints.addAll(cached);
             } else {
-                logger.warn("No cached temperature grid for state: {}", state);
+                LOGGER.warn("No cached temperature grid for state: {}", state);
             }
         }
         return allPoints;

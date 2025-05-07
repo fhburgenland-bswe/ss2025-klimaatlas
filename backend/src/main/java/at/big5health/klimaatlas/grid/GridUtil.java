@@ -15,7 +15,7 @@ public class GridUtil {
     private static final double METERS_PER_DEGREE_LONGITUDE_AT_EQUATOR = 111319.488;
     private static final double CELL_SIZE_METERS = 1000.0; // 1km
 
-    private static final Logger logger = LoggerFactory.getLogger(GridUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(GridUtil.class);
 
 
     public GridCellInfo getGridCellForCoordinates(double latitude, double longitude) {
@@ -81,7 +81,7 @@ public class GridUtil {
 
         List<GridCellInfo> gridCells = new ArrayList<>();
 
-        logger.info("Generating grid for BoundingBox: {} with resolution: {}",
+        LOGGER.info("Generating grid for BoundingBox: {} with resolution: {}",
                 boundingBox.toApiString(), gridResolution);
 
         double minLat = boundingBox.getMinLat();
@@ -99,7 +99,7 @@ public class GridUtil {
             }
         }
 
-        logger.info("Generated {} grid cells", gridCells.size());
+        LOGGER.info("Generated {} grid cells", gridCells.size());
         return gridCells;
 
     }
