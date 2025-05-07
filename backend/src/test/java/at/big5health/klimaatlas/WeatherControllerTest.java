@@ -6,18 +6,17 @@ import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.exceptions.ErrorMessages;
 import at.big5health.klimaatlas.exceptions.ExternalApiException;
 import at.big5health.klimaatlas.exceptions.WeatherDataNotFoundException;
+import at.big5health.klimaatlas.services.GridCacheService;
 import at.big5health.klimaatlas.services.WeatherService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -34,8 +33,11 @@ class WeatherControllerTest {
     @Autowired
     private MockMvc mockMvc; // For performing HTTP requests
 
-    @MockBean // Create a mock bean for WeatherService in the application context
+    @MockitoBean // Create a mock bean for WeatherService in the application context
     private WeatherService weatherService;
+
+    @MockitoBean
+    private GridCacheService gridCacheService;
 
     @Autowired
     private ObjectMapper objectMapper; // For JSON assertions if needed

@@ -12,6 +12,7 @@ import at.big5health.klimaatlas.exceptions.WeatherDataNotFoundException;
 import at.big5health.klimaatlas.grid.BoundingBox;
 import at.big5health.klimaatlas.grid.GridCellInfo;
 import at.big5health.klimaatlas.grid.GridUtil;
+import at.big5health.klimaatlas.models.WeatherReport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
@@ -36,6 +37,7 @@ public class WeatherService {
         this.gridUtil = gridUtil;
     }
 
+    @Cacheable(value = "weatherCache", key = "#latitude + '_' + #longitude + '_' + #actualDate", unless = "#result == null")
     public WeatherReportDTO getWeather(String cityName, Double longitude, Double latitude, LocalDate actualDate) {
         LOG.info("Request received for city: {}, lat: {}, lon: {}, date: {}", cityName, latitude, longitude, actualDate);
 
@@ -71,7 +73,29 @@ public class WeatherService {
         }
     }
 
-    // Added targetLat/Lon parameters for finding the closest feature
+    public WeatherReport getWeatherReport(double latitude, double longitude) {
+        try {
+
+            LocalDate today = LocalDate.now();
+
+            WeatherReportDTO dto = getWeather(null, longitude, latitude, today);
+
+            WeatherReport report = new WeatherReport();
+
+            report.setMaxTemp(dto.getMaxTemp());
+            report.setMinTemp(dto.getMinTemp());
+            report.setLatitude(dto.getLatitude());
+            report.setLongitude(dto.getLongitude());
+            report.setPrecip(dto.getPrecip());
+            report.setSunDuration(dto.getSunDuration());
+
+            return report;
+        } catch (Exception e) {
+            LOG.error("Error getting weather report for lat={}, lon={}: {}", latitude, longitude, e.getMessage());
+            throw new ExternalApiException("Error fetching weather data for coordinates", e);
+        }
+    }
+
     @Cacheable(value = "dailyWeatherDataGrid", key = "#cellId + '_' + #actualDate", sync = true)
     public Optional<WeatherReportDTO> getOrFetchGridCellData(
             String cellId, BoundingBox bbox, LocalDate actualDate, double targetLat, double targetLon) {
@@ -111,6 +135,11 @@ public class WeatherService {
         }
     }
 
+    public WeatherReportDTO getWeatherReportDTO(double latitude, double longitude) {
+        // Verwende die Hauptmethode mit dem aktuellen Datum
+        return getWeather(null, longitude, latitude, LocalDate.now());
+    }
+
     // Helper method to find the closest feature
     private Optional<SpartacusFeature> findClosestFeature(List<SpartacusFeature> features, double targetLat, double targetLon) {
         if (features == null || features.isEmpty()) {
@@ -138,7 +167,6 @@ public class WeatherService {
         return (latDiff * latDiff) + (lonDiff * lonDiff);
     }
 
-
     // extractWeatherDataFromFeature and mapPrecipitation remain the same
     private WeatherReportDTO extractWeatherDataFromFeature(SpartacusFeature feature) {
         Map<String, SpartacusParameter> params = feature.getProperties().getParameters();
@@ -156,4 +184,5 @@ public class WeatherService {
         if (precipValue > 0.0) return Precipitation.DRIZZLE;
         return Precipitation.NONE;
     }
+
 }

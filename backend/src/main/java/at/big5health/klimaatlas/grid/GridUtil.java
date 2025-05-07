@@ -1,7 +1,10 @@
 package at.big5health.klimaatlas.grid;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import java.util.Locale;
+
+import java.util.*;
 
 @Component
 public class GridUtil {
@@ -11,6 +14,8 @@ public class GridUtil {
     // Meters per degree longitude depends on latitude
     private static final double METERS_PER_DEGREE_LONGITUDE_AT_EQUATOR = 111319.488;
     private static final double CELL_SIZE_METERS = 1000.0; // 1km
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GridUtil.class);
 
 
     public GridCellInfo getGridCellForCoordinates(double latitude, double longitude) {
@@ -71,4 +76,32 @@ public class GridUtil {
 
         return new GridCellInfo(cellId, bbox, targetLatitude, targetLongitude);
     }
+
+    public List<GridCellInfo> generateGrid(BoundingBox boundingBox, double gridResolution) {
+
+        List<GridCellInfo> gridCells = new ArrayList<>();
+
+        LOGGER.info("Generating grid for BoundingBox: {} with resolution: {}",
+                boundingBox.toApiString(), gridResolution);
+
+        double minLat = boundingBox.getMinLat();
+        double maxLat = boundingBox.getMaxLat();
+        double minLon = boundingBox.getMinLon();
+        double maxLon = boundingBox.getMaxLon();
+        Set<String> seen = new HashSet<>();
+
+        for (double lat = minLat; lat <= maxLat; lat += gridResolution) {
+            for (double lon = minLon; lon <= maxLon; lon += gridResolution) {
+                GridCellInfo cell = getGridCellForCoordinates(lat, lon);
+                if (seen.add(cell.getCellId())) {
+                    gridCells.add(cell);
+                }
+            }
+        }
+
+        LOGGER.info("Generated {} grid cells", gridCells.size());
+        return gridCells;
+
+    }
+
 }
