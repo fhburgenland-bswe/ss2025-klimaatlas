@@ -19,13 +19,38 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.time.LocalDate;
 import java.util.stream.Collectors;
 
+/**
+ * Global exception handler for the application.
+ * <p>
+ * This class uses {@link RestControllerAdvice} to provide centralized
+ * exception handling across all {@code @RestController} classes. It catches
+ * specific exceptions and formats them into a standardized {@link ErrorResponse}
+ * object, returning appropriate HTTP status codes.
+ *
+ * @see ErrorResponse
+ * @see ErrorMessages
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Logger instance for this class. Used for logging exception details.
+     */
     private static final Logger LOG = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    /**
+     * Handles {@link ConstraintViolationException} which occurs when request validation fails.
+     * <p>
+     * This typically happens due to violations of JSR 380 bean validation annotations
+     * (e.g., {@code @NotNull}, {@code @Size}, {@code @Pattern}) on request DTOs or path variables.
+     * The response includes a semicolon-separated list of all validation failures.
+     *
+     * @param e The {@link ConstraintViolationException} instance.
+     * @return A {@link ResponseEntity} with HTTP status 400 (Bad Request) and an
+     *         {@link ErrorResponse} detailing the validation errors.
+     */
     @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.BAD_REQUEST) // Though ResponseEntity sets it, this is good for clarity
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException e) {
         String specificErrors = e.getConstraintViolations().stream()
                 .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
@@ -35,6 +60,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErrorResponse(formattedMessage));
     }
 
+    /**
+     * Handles {@link MissingServletRequestParameterException} which occurs when a required
+     * request parameter is not provided.
+     *
+     * @param e The {@link MissingServletRequestParameterException} instance.
+     * @return A {@link ResponseEntity} with HTTP status 400 (Bad Request) and an
+     *         {@link ErrorResponse} indicating the missing parameter.
+     */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException e) {
@@ -43,15 +76,25 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErrorResponse(message));
     }
 
+    /**
+     * Handles {@link MethodArgumentTypeMismatchException} which occurs when a method
+     * argument is not of the expected type.
+     * <p>
+     * This often happens when a path variable or request parameter cannot be converted
+     * to the declared type in the controller method (e.g., providing "abc" for an Integer).
+     * A specific message is provided for {@link LocalDate} parsing errors.
+     *
+     * @param e The {@link MethodArgumentTypeMismatchException} instance.
+     * @return A {@link ResponseEntity} with HTTP status 400 (Bad Request) and an
+     *         {@link ErrorResponse} detailing the type mismatch.
+     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
         String message;
-        // Check if the type mismatch was specifically for the LocalDate parameter
         if (e.getRequiredType() != null && e.getRequiredType().equals(LocalDate.class)) {
             message = ErrorMessages.INVALID_DATE_FORMAT.getMessage();
         } else {
-            // Generic message for other type mismatches
             message = ErrorMessages.VALIDATION_ERROR.format(
                     String.format("Parameter '%s' should be of type %s", e.getName(), e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "unknown")
             );
@@ -60,6 +103,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErrorResponse(message));
     }
 
+    /**
+     * Handles {@link InvalidInputException}, a custom exception indicating that
+     * the provided input data is invalid for business logic reasons not covered by
+     * standard bean validation.
+     *
+     * @param e The {@link InvalidInputException} instance.
+     * @return A {@link ResponseEntity} with HTTP status 400 (Bad Request) and an
+     *         {@link ErrorResponse} containing the exception's message.
+     */
     @ExceptionHandler(InvalidInputException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleInvalidInput(InvalidInputException e) {
@@ -67,23 +119,51 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
     }
 
+    /**
+     * Handles {@link WeatherDataNotFoundException}, a custom exception indicating that
+     * requested weather data could not be found.
+     *
+     * @param e The {@link WeatherDataNotFoundException} instance.
+     * @return A {@link ResponseEntity} with HTTP status 404 (Not Found) and an
+     *         {@link ErrorResponse} containing the exception's message.
+     */
     @ExceptionHandler(WeatherDataNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<ErrorResponse> handleWeatherDataNotFound(WeatherDataNotFoundException e) {
-        LOG.info("Data not found: {}", e.getMessage());
+        LOG.info("Data not found: {}", e.getMessage()); // Info level as this might be an expected "not found" scenario
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(e.getMessage()));
     }
 
+    /**
+     * Handles {@link ExternalApiException}, a custom exception indicating an issue
+     * while communicating with an external API.
+     * <p>
+     * The client receives a generic error message, while the specific cause is logged
+     * for internal diagnostics.
+     *
+     * @param e The {@link ExternalApiException} instance.
+     * @return A {@link ResponseEntity} with HTTP status 503 (Service Unavailable) and a
+     *         generic {@link ErrorResponse} message.
+     */
     @ExceptionHandler(ExternalApiException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     public ResponseEntity<ErrorResponse> handleExternalApiException(ExternalApiException e) {
         LOG.error("External API error: {}", e.getMessage(), e.getCause());
-        // Use the standard message from the enum for client response
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(new ErrorResponse(ErrorMessages.EXTERNAL_API_FAILURE.getMessage()));
     }
 
-    @ExceptionHandler(Exception.class) // Catch-all
+    /**
+     * Handles any other {@link Exception} not specifically caught by other handlers.
+     * <p>
+     * This acts as a catch-all for unexpected errors, ensuring that the client
+     * always receives a standardized JSON error response.
+     *
+     * @param e The {@link Exception} instance.
+     * @return A {@link ResponseEntity} with HTTP status 500 (Internal Server Error) and a
+     *         generic {@link ErrorResponse} message.
+     */
+    @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception e) {
         LOG.error("An unexpected error occurred: {}", e.getMessage(), e);

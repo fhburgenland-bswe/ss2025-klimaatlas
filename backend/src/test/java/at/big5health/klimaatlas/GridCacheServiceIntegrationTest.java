@@ -3,6 +3,7 @@ package at.big5health.klimaatlas;
 import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.grid.BoundingBox;
 import at.big5health.klimaatlas.grid.GridCellInfo;
+import at.big5health.klimaatlas.grid.GridTemperature;
 import at.big5health.klimaatlas.grid.GridUtil;
 import at.big5health.klimaatlas.services.GridCacheService;
 import at.big5health.klimaatlas.services.WeatherService;
@@ -69,7 +70,7 @@ public class GridCacheServiceIntegrationTest {
                 }});
 
         // When
-        List<GridCacheService.GridTemperature> result = gridCacheService.getTemperatureGridForState("Wien");
+        List<GridTemperature> result = gridCacheService.getTemperatureGridForState("Wien");
 
         // Then
         assertThat(result.size()).isGreaterThanOrEqualTo(0);
