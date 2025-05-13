@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SourcesComponent } from "./pages/sources/sources.component";
 import { ContentComponent } from "./pages/content/content.component";
+import { MosquitoOccurrence } from '../../interfaces/mosquito-occurrence.interface';
+import { SelectionService } from '../../services/selection.service';
 
 @Component({
   selector: 'app-side-panel',
@@ -15,8 +17,20 @@ export class SidePanelComponent implements OnInit{
   activePanel: 'content' | 'sources' = 'content';
   isMobile = false;
 
+  selectedOccurrence: MosquitoOccurrence | null = null;
+
+  constructor(private selectionService: SelectionService) {}
+
   ngOnInit(): void {
     this.checkViewport();
+
+    this.selectionService.selectedOccurrence$.subscribe(occurrence => {
+      this.selectedOccurrence = occurrence;
+      if (occurrence) {
+        this.activePanel = 'content';
+        this.isCollapsed = false;
+      }
+    });
   }
 
 @HostListener('window:resize')

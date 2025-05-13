@@ -19,6 +19,7 @@
     opacity: 1;
     filter: blur(0px);
     pointer-events: auto;
+    overflow-y: auto;
 }
 
 .side-panel-content.collapsed {
@@ -109,6 +110,7 @@
 @media (max-width: 992px) {
     .side-panel {
         width: 40%;
+        background-color: white;
     }
 }
 

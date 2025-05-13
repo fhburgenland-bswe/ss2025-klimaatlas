@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { City } from '../../../../interfaces/city-interface';
 import { MapService } from '../../../../services/map.service';
 import * as L from 'leaflet';
+import { MosquitoOccurrence } from '../../../../interfaces/mosquito-occurrence.interface';
 
 @Component({
   selector: 'app-content',
@@ -17,6 +18,8 @@ export class ContentComponent implements OnInit {
   cities: City[] = [];
   filteredCities: City[] = [];
   selectedMarker?: L.Marker;
+
+  @Input() data: MosquitoOccurrence | null = null;
 
   constructor(private mapService: MapService) { }
 
