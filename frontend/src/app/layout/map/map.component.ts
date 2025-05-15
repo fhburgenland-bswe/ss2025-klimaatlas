@@ -5,6 +5,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { GeoJsonObject } from 'geojson';
 import { MapService } from '../../services/map.service';
+import { MosquitoService } from '../../services/mosquito.service';
+import { MosquitoOccurrence } from '../../interfaces/mosquito-occurrence.interface';
+import { SelectionService } from '../../services/selection.service';
 
 @Component({
   selector: 'app-map',
@@ -14,6 +17,7 @@ import { MapService } from '../../services/map.service';
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements AfterViewInit, OnDestroy {
+  hasError = false;
   public map!: L.Map;
   private central: L.LatLngExpression = [47.75, 13.0];
   private bounds: L.LatLngBoundsExpression = [
@@ -21,7 +25,33 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     [51.0, 20.5]
   ];
 
-  constructor(private http: HttpClient, private mapService: MapService) { }
+  private mosquitoIcon = L.icon({
+    iconUrl: 'assets/img/marker-icon-2x-mosquito.png',
+    iconSize: [90, 90],
+    iconAnchor: [45, 90],
+    popupAnchor: [0, -90],
+    shadowUrl: 'assets/img/marker-shadow.png',
+    shadowSize: [90, 90],
+  });
+
+  private higlightedMosquitoIcon = L.icon({
+    iconUrl: 'assets/img/marker-icon-2x-mosquito-highlighted.png',
+    iconSize: [90, 90],
+    iconAnchor: [45, 90],
+    popupAnchor: [0, -90],
+    shadowUrl: 'assets/img/marker-shadow.png',
+    shadowSize: [90, 90],
+  });
+
+  private selectedMarker: L.Marker | null = null;
+
+  constructor(
+    private http: HttpClient,
+    private mapService: MapService,
+    private mosquitoService: MosquitoService,
+    private selectionService: SelectionService
+    ) { }
+
   ngAfterViewInit(): void {
     // eslint-disable-next-line
     delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -43,6 +73,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     });
 
     this.loadRegions();
+    this.loadMosquitoMarkers();
   }
 
   handleMapScroll(event: WheelEvent): void {
@@ -105,5 +136,63 @@ export class MapComponent implements AfterViewInit, OnDestroy {
         }
       }).addTo(this.map);
     });
+  }
+
+  private loadMosquitoMarkers(): void {
+    this.mosquitoService.getMosquitoOccurrences().subscribe({
+      next: (occurrences: MosquitoOccurrence[]) => {
+        occurrences.forEach(occurrence => {
+          const marker = L.marker([occurrence.latitude, occurrence.longitude], { icon: this.mosquitoIcon })
+            .bindPopup(`
+              <strong>Spezies:</strong> ${occurrence.species}<br>
+              <strong>Datum:</strong> ${this.formatDate(occurrence.eventDate)}
+            `)
+            .on('click', () => {
+              if (this.selectedMarker) {
+                this.selectedMarker.setIcon(this.mosquitoIcon);
+              }
+              
+              marker.setIcon(this.higlightedMosquitoIcon);
+              this.selectedMarker = marker;
+
+              this.selectionService.setSelectedOccurrence(occurrence);
+            })
+            .on('popupclose', () => {
+              if (this.selectedMarker) {
+                this.selectedMarker.setIcon(this.mosquitoIcon);
+              }
+              
+              marker.setIcon(this.mosquitoIcon);
+              this.selectedMarker = marker;
+
+              this.selectionService.setSelectedOccurrence(null);
+            });
+  
+          marker.addTo(this.map);
+          this.hasError = false;
+        });
+      },
+      error: (err) => {
+        console.error('Error loading mosquito data:', err);
+        this.hasError = true;
+      }
+    });
+  }
+
+  private formatDate(dateStr: string): string {
+    if (!dateStr || dateStr === 'Unknown') return 'Unknown Datum';
+  
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Unknown Datum';
+  
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+  
+    return `${day}.${month}.${year}`;
+  }
+
+  closePopup() {
+    this.hasError = false;
   }
 }

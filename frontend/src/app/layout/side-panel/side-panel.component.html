@@ -3,7 +3,7 @@
 
     <!-- Panel switching -->
     <div class="p-3 side-panel-content" [class.collapsed]="isCollapsed">
-        <app-content *ngIf="activePanel === 'content'"></app-content>
+        <app-content *ngIf="activePanel === 'content'" [data]="selectedOccurrence"></app-content>
         <app-sources *ngIf="activePanel === 'sources'"></app-sources>
     </div>
 
@@ -32,7 +32,7 @@
 <div *ngIf="isMobile" class="d-flex flex-column h-100">
     <div class="side-panel d-flex flex-column mobile" [class.collapsed]="isCollapsed">
         <div class="p-3 overflow-auto" [ngClass]="{ 'fade-hidden': activePanel !== 'content' }">
-            <app-content *ngIf="activePanel === 'content'"></app-content>
+            <app-content *ngIf="activePanel === 'content'" [data]="selectedOccurrence"></app-content>
             <app-sources *ngIf="activePanel === 'sources'"></app-sources>
         </div>
 
