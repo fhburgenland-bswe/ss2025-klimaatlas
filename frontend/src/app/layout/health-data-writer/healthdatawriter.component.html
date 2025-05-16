@@ -1,0 +1,40 @@
+<div class="container d-flex align-items-center justify-content-center border mt-5 p-5">
+    <div class="row d-flex align-items-center justify-content-center">
+        <div class="col-12">
+            <div>Type Health Risk Data to show on the website and then click on save button (max. 500 characters):</div>
+        </div>
+        <div class="col-12">
+            <textarea class="form-control mt-4" rows="4" maxlength="500" minlength="1" [(ngModel)]="healthRiskText"
+                placeholder="Default input">
+            </textarea>
+            <button class="btn btn-primary mt-2" (click)="saveData()">Save</button>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+
+    <div class="modal-backdrop fade show" *ngIf="showModal" (click)="closeModal()" (keydown.enter)="closeModal()"
+        (keydown.space)="closeModal()" tabindex="0" role="button" aria-label="Close modal background"></div>
+        
+    <div class="modal mt-5" tabindex="-1" role="dialog" [class.show]="showModal"
+        [style.display]="showModal ? 'block' : 'none'" attr.aria-modal="{{showModal}}">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Health Risk Data</h5>
+                </div>
+                <div class="modal-body">
+                    <p>The text is successfully written and available on the main page.</p>
+                </div>
+                <div class="d-flex justify-content-around">
+                    <div class="ps-2 pb-2">
+                        <button type="button" class="btn btn-primary" (click)="navigateHome()">Go Home</button>
+                    </div>
+                    <div class="ps-2 pb-2">
+                        <button type="button" class="btn btn-secondary" (click)="closeModal()">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

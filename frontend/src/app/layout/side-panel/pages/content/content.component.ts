@@ -5,28 +5,43 @@ import { City } from '../../../../interfaces/city-interface';
 import { MapService } from '../../../../services/map.service';
 import * as L from 'leaflet';
 import { MosquitoOccurrence } from '../../../../interfaces/mosquito-occurrence.interface';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 
 @Component({
   selector: 'app-content',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './content.component.html',
   styleUrl: './content.component.scss',
 })
 export class ContentComponent implements OnInit {
-  @Input() isCollapsed = false; 
+  @Input() isCollapsed = false;
   searchTerm = '';
   cities: City[] = [];
   filteredCities: City[] = [];
   selectedMarker?: L.Marker;
+  healthRiskContent = '';
 
   @Input() data: MosquitoOccurrence | null = null;
 
-  constructor(private mapService: MapService) { }
+  constructor(private mapService: MapService, private http: HttpClient) { }
 
   ngOnInit(): void {
     this.mapService.getCities().subscribe(data => {
       this.cities = data;
     });
+    this.loadHealthData();
+    console.log("oninit: " + this.healthRiskContent);
+  }
+
+  loadHealthData() {
+    this.http.get('http://localhost:8081/load.php', { responseType: 'text' })
+      .subscribe({
+        next: data => this.healthRiskContent = data,
+        error: err => {
+          console.error('Failure when loading the content', err);
+          this.healthRiskContent = 'Data is not available at the moment.'
+        }
+      })
   }
 
   togglePanel(): void {
