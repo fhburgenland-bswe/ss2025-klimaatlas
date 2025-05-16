@@ -54,7 +54,7 @@ export class MapService {
     return Array.isArray((geojson as GeoJSON.FeatureCollection).features);
   }
 
-  private addGeoJSONFeaturesToMap(features: GeoJSON.Feature[], provinceCode: string): void {
+  public addGeoJSONFeaturesToMap(features: GeoJSON.Feature[], provinceCode: string): void {
     if (!this.map) return;
 
     const filteredFeatures = features.filter(feature =>

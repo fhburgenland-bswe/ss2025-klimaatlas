@@ -53,7 +53,6 @@ describe('MapComponent', () => {
     httpMock.verify();
   });
 
-
   it('should create', () => {
     expect(component).toBeTruthy();
   });
