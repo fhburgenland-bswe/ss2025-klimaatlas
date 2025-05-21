@@ -49,7 +49,7 @@ dependencies {
 	// Cache Implementation
 	implementation 'com.github.ben-manes.caffeine:caffeine'
 
-	// Lombok
+    // Lombok
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 

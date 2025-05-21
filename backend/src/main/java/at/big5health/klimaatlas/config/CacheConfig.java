@@ -1,4 +1,4 @@
-package at.big5health.klimaatlas;
+package at.big5health.klimaatlas.config;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -42,7 +42,6 @@ public class CacheConfig {
      * @return A configured {@link ConcurrentMapCacheManager} instance.
      * @see ConcurrentMapCacheManager
      * @see at.big5health.klimaatlas.services.WeatherService (uses "weatherCache")
-     * @see at.big5health.klimaatlas.services.GridCacheService (uses "temperatureGrid")
      */
     @Bean
     public CacheManager cacheManager() {
@@ -72,7 +71,6 @@ public class CacheConfig {
      * @return A configured {@link ThreadPoolTaskScheduler} instance.
      * @see ThreadPoolTaskScheduler
      * @see EnableScheduling
-     * @see at.big5health.klimaatlas.services.GridCacheService#refreshCache() (example of a scheduled task)
      */
     @Bean
     public TaskScheduler taskScheduler() {

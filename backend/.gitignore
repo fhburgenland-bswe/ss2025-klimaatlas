@@ -33,8 +33,9 @@ out/
 /nbdist/
 /.nb-gradle/
 
-### VS Code ###
+###IDE's
 .vscode/
+.idea
 
 ### Example HTTPs
 exampleHttpRequests.http

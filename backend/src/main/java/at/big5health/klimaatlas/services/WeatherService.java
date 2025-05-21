@@ -294,14 +294,34 @@ public class WeatherService {
     }
 
     /**
+     * Helper method to safely extract the first data value from a SpartacusParameter.
+     *
+     * @param params        The map of parameters.
+     * @param parameterName The name of the parameter to extract (e.g., "TN", "TX", "SA").
+     * @return The Double value of the parameter, or null if not found or data is missing.
+     */
+    private Double getParameterValue(Map<String, SpartacusParameter> params, String parameterName) {
+        if (params.containsKey(parameterName)) {
+            SpartacusParameter param = params.get(parameterName);
+            if (param != null && param.getData() != null && !param.getData().isEmpty()) {
+                // Assuming the first value in the list is the one we need.
+                return param.getData().get(0);
+            } else {
+                LOG.warn("Parameter '{}' is present but has no data or data list is empty.", parameterName);
+            }
+        }
+        return null; // Parameter not found or no data
+    }
+
+
+    /**
      * Extracts weather data from a {@link SpartacusFeature} and maps it to a
      * {@link WeatherReportDTO}.
      * <p>
      * It retrieves parameters like minimum temperature ("TN"), maximum temperature ("TX"),
-     * and precipitation ("RR") from the feature's properties.
+     * precipitation ("RR"), and sun duration ("SA") from the feature's properties.
      * Latitude and longitude in the returned DTO are set to {@code null} as they are
      * expected to be set by the calling method based on the original request or cell context.
-     * Sun duration is currently a placeholder.
      *
      * @param feature The {@link SpartacusFeature} from which to extract data.
      * @return A {@link WeatherReportDTO} populated with data from the feature.
@@ -309,12 +329,17 @@ public class WeatherService {
      */
     private WeatherReportDTO extractWeatherDataFromFeature(SpartacusFeature feature) {
         Map<String, SpartacusParameter> params = feature.getProperties().getParameters();
-        Double minTemp = params.containsKey("TN") ? params.get("TN").getData().get(0) : null;
-        Double maxTemp = params.containsKey("TX") ? params.get("TX").getData().get(0) : null;
-        Double precipValue = params.containsKey("RR") ? params.get("RR").getData().get(0) : null;
-        Double sunDuration = null; // Placeholder
-        Precipitation precipEnum = mapPrecipitation(precipValue);
-        return new WeatherReportDTO(minTemp, maxTemp, precipEnum, sunDuration, null, null);
+
+        Double minTemp = getParameterValue(params, "TN");
+        Double maxTemp = getParameterValue(params, "TX");
+        Double precipValue = getParameterValue(params, "RR");
+        Double sunDurationSeconds = getParameterValue(params, "SA"); // Extract "SA" for sun duration
+
+        Precipitation precipEnum = mapPrecipitation(precipValue); // Keep existing enum mapping
+
+        // Latitude and longitude are null here; they will be set by the calling method
+        // (getWeather) to the original request's coordinates.
+        return new WeatherReportDTO(minTemp, maxTemp, precipEnum, sunDurationSeconds, null, null);
     }
 
     /**
@@ -338,5 +363,4 @@ public class WeatherService {
         if (precipValue > 0.0) return Precipitation.DRIZZLE;
         return Precipitation.NONE;
     }
-
 }
