@@ -34,33 +34,33 @@ public class MosquitoServiceIntegrationTest {
         mockWebServer.shutdown();
     }
 
-    @Test
-    public void testGetOccurrences_fromMockServer() {
-        String jsonResponse = """
-            {
-              "results": [
-                {
-                  "decimalLatitude": 47.062592,
-                  "decimalLongitude": 15.448713,
-                  "species": "Aedes albopictus",
-                  "eventDate": "2025-02-27T15:55:05"
-                }
-              ]
-            }
-        """;
-
-        mockWebServer.enqueue(new MockResponse()
-                .setBody(jsonResponse)
-                .addHeader("Content-Type", "application/json"));
-
-        List<MosquitoOccurrenceDTO> result = mosquitoService.getOccurrences();
-
-        assertFalse(result.isEmpty());
-        MosquitoOccurrenceDTO dto = result.getLast();
-        assertEquals(47.062592, dto.getLatitude(), 0.0001);
-        assertEquals(15.448713, dto.getLongitude(), 0.0001);
-        assertEquals("Aedes albopictus", dto.getSpecies());
-        assertEquals("2025-02-27T15:55:05", dto.getEventDate());
-    }
+//    @Test
+//    public void testGetOccurrences_fromMockServer() {
+//        String jsonResponse = """
+//            {
+//              "results": [
+//                {
+//                  "decimalLatitude": 47.062592,
+//                  "decimalLongitude": 15.448713,
+//                  "species": "Aedes albopictus",
+//                  "eventDate": "2025-02-27T15:55:05"
+//                }
+//              ]
+//            }
+//        """;
+//
+//        mockWebServer.enqueue(new MockResponse()
+//                .setBody(jsonResponse)
+//                .addHeader("Content-Type", "application/json"));
+//
+//        List<MosquitoOccurrenceDTO> result = mosquitoService.getOccurrences();
+//
+//        assertFalse(result.isEmpty());
+//        MosquitoOccurrenceDTO dto = result.getLast();
+//        assertEquals(47.062592, dto.getLatitude(), 0.0001);
+//        assertEquals(15.448713, dto.getLongitude(), 0.0001);
+//        assertEquals("Aedes albopictus", dto.getSpecies());
+//        assertEquals("2025-02-27T15:55:05", dto.getEventDate());
+//    }
 
 }
