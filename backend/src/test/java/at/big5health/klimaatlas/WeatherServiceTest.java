@@ -93,7 +93,7 @@ class WeatherServiceTest {
         // Ensure this DTO matches the structure including sunDuration
         WeatherReportDTO fetchedDtoFromInternalCall = new WeatherReportDTO(
                 5.0, 15.0, Precipitation.DRIZZLE, 3600.0, // Example sun duration in seconds
-                null, null // Internal DTO has null lat/lon before getWeather sets them
+                null, null, null // Internal DTO has null lat/lon before getWeather sets them
         );
         doReturn(Optional.of(fetchedDtoFromInternalCall))
                 .when(weatherService).getOrFetchGridCellData(testCellId, testBbox, testDate, targetLat, targetLon);

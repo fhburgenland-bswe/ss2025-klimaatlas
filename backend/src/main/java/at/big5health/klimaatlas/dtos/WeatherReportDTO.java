@@ -61,4 +61,10 @@ public class WeatherReportDTO {
      * Expressed in decimal degrees.
      */
     private Double longitude;
+
+    /**
+     * The name of the city for which the weather report is associated.
+     * This is an optional field primarily used for display purposes.
+     */
+    private String cityName;
 }
