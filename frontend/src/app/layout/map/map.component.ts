@@ -8,6 +8,10 @@ import { MapService } from '../../services/map.service';
 import { MosquitoService } from '../../services/mosquito.service';
 import { MosquitoOccurrence } from '../../interfaces/mosquito-occurrence.interface';
 import { SelectionService } from '../../services/selection.service';
+import { WeatherService } from '../../services/weather.service';
+import { WeatherReportDTO } from '../../interfaces/weather';
+import { translatePrecipitation } from '../../utils/precipitation-translator';
+import { createTemperaturePinSvg } from '../../utils/temperature-pins';
 
 @Component({
   selector: 'app-map',
@@ -19,6 +23,7 @@ import { SelectionService } from '../../services/selection.service';
 export class MapComponent implements AfterViewInit, OnDestroy {
   hasError = false;
   public map!: L.Map;
+  private selectedTempMarker: L.Marker | null = null;
   private central: L.LatLngExpression = [47.75, 13.0];
   private bounds: L.LatLngBoundsExpression = [
     [44.5, 6.5],
@@ -49,7 +54,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     private http: HttpClient,
     private mapService: MapService,
     private mosquitoService: MosquitoService,
-    private selectionService: SelectionService
+    private selectionService: SelectionService,
+    private weatherService: WeatherService
     ) { }
 
   ngAfterViewInit(): void {
@@ -74,6 +80,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
     this.loadRegions();
     this.loadMosquitoMarkers();
+    this.loadWeatherMarkers();
   }
 
   handleMapScroll(event: WheelEvent): void {
@@ -111,6 +118,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
     L.control.zoom({ position: 'topright' }).addTo(this.map);
 
+    this.map.createPane('temperaturePane');
+    this.map.getPane('temperaturePane')!.style.zIndex = '650';
+
+    this.map.createPane('mosquitoPane');
+    this.map.getPane('mosquitoPane')!.style.zIndex = '600';
+
     this.mapService.setMap(this.map);
 
     L.tileLayer('https://tile.openstreetmap.de/{z}/{x}/{y}.png', {
@@ -138,14 +151,88 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  private loadWeatherMarkers(): void {
+    this.weatherService.getCachedWeatherReports().subscribe({
+      next: (reports: WeatherReportDTO[]) => {
+        reports.forEach(report => {
+          const icon = L.divIcon({
+            className: '',
+            html: createTemperaturePinSvg(report.maxTemp),
+            iconSize: [50, 70],
+            iconAnchor: [25, 70],
+            popupAnchor: [0, -70]
+          });
+
+          const marker = L.marker([report.latitude, report.longitude], { icon, pane: 'temperaturePane' })
+            .bindPopup(`
+              <div style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">
+                <strong>Ort:</strong> ${report.cityName} <br>
+                <strong>Min. Temperatur:</strong> ${report.minTemp} °C<br>
+                <strong>Max. Temperatur:</strong> ${report.maxTemp} °C<br>
+                <strong>Niederschlag:</strong> ${translatePrecipitation(report.precip)}
+              </div>
+            `)
+            .on('click', () => {
+              if (this.selectedTempMarker) {
+                const oldReport = this.selectedTempMarker.getLatLng();
+                const old = reports.find(r => r.latitude === oldReport.lat && r.longitude === oldReport.lng);
+                if (old) {
+                  this.selectedTempMarker.setIcon(L.divIcon({
+                    className: '',
+                    html: createTemperaturePinSvg(old.maxTemp),
+                    iconSize: [50, 70],
+                    iconAnchor: [25, 70],
+                    popupAnchor: [0, -70],
+                    pane: 'temperaturePane'
+                  }));
+                }
+              }
+
+              marker.setIcon(L.divIcon({
+                className: '',
+                html: createTemperaturePinSvg(report.maxTemp, true),
+                iconSize: [50, 70],
+                iconAnchor: [25, 70],
+                popupAnchor: [0, -70],
+                pane: 'temperaturePane'
+              }));
+
+              this.selectedTempMarker = marker;
+            })
+            .on('popupclose', () => {
+              if (this.selectedTempMarker === marker) {
+                marker.setIcon(L.divIcon({
+                  className: '',
+                  html: createTemperaturePinSvg(report.maxTemp),
+                  iconSize: [50, 70],
+                  iconAnchor: [25, 70],
+                  popupAnchor: [0, -70],
+                  pane: 'temperaturePane'
+                }));
+                this.selectedTempMarker = null;
+              }
+            });
+
+          marker.addTo(this.map);
+        });
+      },
+      error: (err) => {
+        console.error('Fehler beim Laden der Wetterdaten:', err);
+        this.hasError = true;
+      }
+    });
+  }
+
   private loadMosquitoMarkers(): void {
     this.mosquitoService.getMosquitoOccurrences().subscribe({
       next: (occurrences: MosquitoOccurrence[]) => {
         occurrences.forEach(occurrence => {
-          const marker = L.marker([occurrence.latitude, occurrence.longitude], { icon: this.mosquitoIcon })
+          const marker = L.marker([occurrence.latitude, occurrence.longitude], { icon: this.mosquitoIcon, pane: 'mosquitoPane' })
             .bindPopup(`
-              <strong>Spezies:</strong> ${occurrence.species}<br>
-              <strong>Datum:</strong> ${this.formatDate(occurrence.eventDate)}
+              <div style="user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;">
+                <strong>Spezies:</strong> ${occurrence.species}<br>
+                <strong>Datum:</strong> ${this.formatDate(occurrence.eventDate)}
+              </div>
             `)
             .on('click', () => {
               if (this.selectedMarker) {

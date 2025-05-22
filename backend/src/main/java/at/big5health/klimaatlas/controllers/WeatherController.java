@@ -1,5 +1,6 @@
 package at.big5health.klimaatlas.controllers;
 
+import at.big5health.klimaatlas.config.AustrianPopulationCenter;
 import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.grid.GridTemperature;
 import at.big5health.klimaatlas.services.WeatherService;
@@ -13,8 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.Cache;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * REST controller for retrieving weather-related information.
@@ -38,6 +43,8 @@ import java.time.LocalDate;
 public class WeatherController {
 
     private final WeatherService weatherService;
+
+    private final CacheManager cacheManager;
     // No explicit constructor needed due to @AllArgsConstructor.
 
     /**
@@ -76,6 +83,63 @@ public class WeatherController {
     }
 
     /**
+     * Retrieves cached weather data for all predefined Austrian population centers for a specific date.
+     * <p>
+     * This endpoint returns a list of {@link WeatherReportDTO} objects representing weather information
+     * for each location defined in the {@link AustrianPopulationCenter} enum. It directly accesses the
+     * Spring cache named {@code "weatherCache"} and does not trigger any external API calls or data fetching
+     * via service methods.
+     * <p>
+     * The method guarantees that only fully cached datasets are returned. If any of the required
+     * entries are missing from the cache, the endpoint will return {@code 204 No Content} to indicate that
+     * a complete dataset is not yet available.
+     * <p>
+     * Typical use case: display pre-cached weather data (e.g., pins on a map) on the frontend without
+     * risking API latency or failures.
+     *
+     * @param actualDate The date for which the cached weather data is requested, in ISO format (YYYY-MM-DD).
+     *                   Typically this should match the date used in the application's scheduled or startup
+     *                   pre-caching (usually yesterday).
+     * @return A {@link ResponseEntity} containing:
+     *         <ul>
+     *             <li>HTTP 200 (OK) and a full list of {@link WeatherReportDTO} if all data is found in the cache.</li>
+     *             <li>HTTP 204 (No Content) if any city is missing from the cache.</li>
+     *             <li>HTTP 500 (Internal Server Error) if the cache could not be accessed.</li>
+     *         </ul>
+     *
+     * @see WeatherReportDTO
+     * @see AustrianPopulationCenter
+     * @see org.springframework.cache.CacheManager
+     */
+    @GetMapping("/cached")
+    public ResponseEntity<List<WeatherReportDTO>> getAllCachedWeatherData(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate actualDate) {
+
+        List<WeatherReportDTO> results = new ArrayList<>();
+        Cache cache = cacheManager.getCache("weatherCache");
+
+        if (cache == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        for (AustrianPopulationCenter center : AustrianPopulationCenter.values()) {
+            String key = center.getRepresentativeLatitude() + "_" + center.getRepresentativeLongitude() + "_" + actualDate;
+            WeatherReportDTO cached = cache.get(key, WeatherReportDTO.class);
+
+            if (cached == null) {
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+            }
+
+            cached.setCityName(center.getDisplayName());
+
+            results.add(cached);
+        }
+
+        return ResponseEntity.ok(results);
+    }
+
+
+    /**
      * Retrieves temperature grid data points, optionally filtered by state.
      * <p>
      * If a 'state' query parameter is provided and is not empty, the grid points
@@ -107,4 +171,5 @@ public class WeatherController {
 //
 //        return ResponseEntity.ok(gridPoints);
 //    }
+
 }

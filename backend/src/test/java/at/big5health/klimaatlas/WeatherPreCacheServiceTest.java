@@ -56,7 +56,7 @@ class WeatherPreCacheServiceTest {
     void setUp() {
         expectedDateToFetch = LocalDate.now().minusDays(1);
         // A dummy DTO for successful calls, as getWeather returns a DTO
-        dummySuccessDTO = new WeatherReportDTO(0.0, 0.0, Precipitation.NONE, 0.0, 0.0, 0.0);
+        dummySuccessDTO = new WeatherReportDTO(0.0, 0.0, Precipitation.NONE, 0.0, 0.0, 0.0, null);
     }
 
     @Test

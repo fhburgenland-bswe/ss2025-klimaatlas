@@ -115,7 +115,7 @@ public class WeatherService {
             WeatherReportDTO cellData = cellDataOpt.get();
             return new WeatherReportDTO(
                     cellData.getMinTemp(), cellData.getMaxTemp(), cellData.getPrecip(),
-                    cellData.getSunDuration(), latitude, longitude // Use original request lat/lon for final response
+                    cellData.getSunDuration(), latitude, longitude, cityName // Use original request lat/lon for final response
             );
         } else {
             LOG.warn("No weather data found for grid cell {} on date {}", gridCell.getCellId(), actualDate);
@@ -339,7 +339,7 @@ public class WeatherService {
 
         // Latitude and longitude are null here; they will be set by the calling method
         // (getWeather) to the original request's coordinates.
-        return new WeatherReportDTO(minTemp, maxTemp, precipEnum, sunDurationSeconds, null, null);
+        return new WeatherReportDTO(minTemp, maxTemp, precipEnum, sunDurationSeconds, null, null, null);
     }
 
     /**

@@ -49,7 +49,7 @@ class WeatherControllerTest {
     void getWeather_whenValidInputAndDataFound_shouldReturn200Ok() throws Exception {
         // Arrange
         WeatherReportDTO mockReport = new WeatherReportDTO(
-                5.5, 15.5, Precipitation.RAIN, 7.1, testLat, testLon
+                5.5, 15.5, Precipitation.RAIN, 7.1, testLat, testLon, testCity
         );
         given(weatherService.getWeather(testCity, testLon, testLat, testDate)).willReturn(mockReport);
 

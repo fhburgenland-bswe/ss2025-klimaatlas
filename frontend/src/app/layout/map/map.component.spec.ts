@@ -5,6 +5,10 @@ import { MapService } from '../../services/map.service';
 import * as L from 'leaflet';
 import { MosquitoService } from '../../services/mosquito.service';
 import { MosquitoOccurrence } from '../../interfaces/mosquito-occurrence.interface';
+import { WeatherService } from '../../services/weather.service';
+import { SelectionService } from '../../services/selection.service';
+import { of } from 'rxjs';
+import { WeatherReportDTO } from '../../interfaces/weather';
 
 describe('MapComponent', () => {
   let component: MapComponent;
@@ -35,7 +39,9 @@ describe('MapComponent', () => {
             setMap: jasmine.createSpy('setMap')
           }
         },
-        MosquitoService
+        MosquitoService,
+        SelectionService,
+        WeatherService
       ]
     }).compileComponents();
 
@@ -62,6 +68,12 @@ describe('MapComponent', () => {
 
     fixture.detectChanges();
 
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const actualDateStr = yesterday.toISOString().split('T')[0];
+
+    httpMock.expectOne(`http://localhost:8080/dailyweather/cached?actualDate=${actualDateStr}`).flush([]);
+
     const req = httpMock.expectOne('assets/austria-regions.geojson');
     req.flush({ type: 'FeatureCollection', features: [] });
 
@@ -76,6 +88,12 @@ describe('MapComponent', () => {
 
   it('should load and render GeoJSON regions', fakeAsync(() => {
     fixture.detectChanges();
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const actualDateStr = yesterday.toISOString().split('T')[0];
+
+    httpMock.expectOne(`http://localhost:8080/dailyweather/cached?actualDate=${actualDateStr}`).flush([]);
 
     const req = httpMock.expectOne('assets/austria-regions.geojson');
     expect(req.request.method).toBe('GET');
@@ -111,7 +129,9 @@ describe('MapComponent', () => {
       getMinZoom: () => 6,
       getMaxZoom: () => 18,
       remove: jasmine.createSpy('remove'),
-      addLayer: jasmine.createSpy('addLayer')
+      addLayer: jasmine.createSpy('addLayer'),
+      createPane: jasmine.createSpy('createPane'),
+      getPane: jasmine.createSpy('getPane').and.returnValue(document.createElement('div'))
     } as unknown as L.Map;
   
     spyOn(L, 'map').and.returnValue(fakeMap);
@@ -122,6 +142,12 @@ describe('MapComponent', () => {
     expect(onSpy).toHaveBeenCalledWith('focus', jasmine.any(Function));
     expect(onSpy).toHaveBeenCalledWith('blur', jasmine.any(Function));
   
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const actualDateStr = yesterday.toISOString().split('T')[0];
+
+    httpMock.expectOne(`http://localhost:8080/dailyweather/cached?actualDate=${actualDateStr}`).flush([]);
+
     httpMock.expectOne('assets/austria-regions.geojson').flush({ type: 'FeatureCollection', features: [] });
     httpMock.expectOne('http://localhost:8080/mosquitoes').flush([]);
   }));
@@ -173,6 +199,12 @@ describe('MapComponent', () => {
   
     fixture.detectChanges();
   
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const actualDateStr = yesterday.toISOString().split('T')[0];
+
+    httpMock.expectOne(`http://localhost:8080/dailyweather/cached?actualDate=${actualDateStr}`).flush([]);
+
     httpMock.expectOne('assets/austria-regions.geojson').flush({ type: 'FeatureCollection', features: [] });
   
     const mockData: MosquitoOccurrence[] = [{
@@ -221,6 +253,12 @@ describe('MapComponent', () => {
   
     fixture.detectChanges();
   
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const actualDateStr = yesterday.toISOString().split('T')[0];
+
+    httpMock.expectOne(`http://localhost:8080/dailyweather/cached?actualDate=${actualDateStr}`).flush([]);
+
     httpMock.expectOne('assets/austria-regions.geojson').flush({ type: 'FeatureCollection', features: [] });
     httpMock.expectOne('http://localhost:8080/mosquitoes').flush([mockOccurrence]);
     tick();
@@ -244,6 +282,12 @@ describe('MapComponent', () => {
   
     fixture.detectChanges();
   
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const actualDateStr = yesterday.toISOString().split('T')[0];
+
+    httpMock.expectOne(`http://localhost:8080/dailyweather/cached?actualDate=${actualDateStr}`).flush([]);
+
     httpMock.expectOne('assets/austria-regions.geojson').flush({ type: 'FeatureCollection', features: [] });
     httpMock.expectOne('http://localhost:8080/mosquitoes').flush('Error', { status: 500, statusText: 'Server Error' });
   
@@ -268,6 +312,126 @@ describe('MapComponent', () => {
     component.closePopup();
     expect(component.hasError).toBeFalse();
   });
-  
-  
+
+  it('should register addEventListener and removeEventListener on focus and blur', fakeAsync(() => {
+    const addEventListenerSpy = jasmine.createSpy('addEventListener');
+    const removeEventListenerSpy = jasmine.createSpy('removeEventListener');
+
+    const mockContainer = {
+      addEventListener: addEventListenerSpy,
+      removeEventListener: removeEventListenerSpy
+    };
+
+    const onSpy = jasmine.createSpy('on').and.callFake((event, callback) => {
+      if (event === 'focus' || event === 'blur') callback();
+      return fakeMap;
+    });
+
+    const fakeMap = {
+    on: onSpy,
+    getContainer: () => mockContainer,
+    createPane: jasmine.createSpy(),
+    getPane: jasmine.createSpy().and.returnValue(document.createElement('div')),
+    scrollWheelZoom: {
+      enable: jasmine.createSpy(),
+      disable: jasmine.createSpy()
+    },
+    addLayer: jasmine.createSpy(),
+    remove: jasmine.createSpy()
+  } as unknown as L.Map;
+
+    spyOn(L, 'map').and.returnValue(fakeMap);
+
+    fixture.detectChanges();
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const actualDateStr = yesterday.toISOString().split('T')[0];
+
+    httpMock.expectOne(`http://localhost:8080/dailyweather/cached?actualDate=${actualDateStr}`).flush([]);
+    httpMock.expectOne('assets/austria-regions.geojson').flush({ type: 'FeatureCollection', features: [] });
+    httpMock.expectOne('http://localhost:8080/mosquitoes').flush([]);
+
+    tick();
+
+    expect(addEventListenerSpy).toHaveBeenCalledWith('wheel', jasmine.any(Function));
+    expect(removeEventListenerSpy).toHaveBeenCalledWith('wheel', jasmine.any(Function));
+  }));
+
+  it('should disable scroll zoom if ctrlKey is not pressed', () => {
+    const scrollZoomMock = {
+      enable: jasmine.createSpy(),
+      disable: jasmine.createSpy()
+    };
+
+    component.map = {
+      scrollWheelZoom: scrollZoomMock,
+      getMinZoom: () => 6,
+      remove: jasmine.createSpy('remove'),
+      on: jasmine.createSpy('on'),
+      getContainer: () => document.createElement('div')
+    } as unknown as L.Map;
+
+    const event = new WheelEvent('wheel', { ctrlKey: false });
+    component.handleMapScroll(event);
+
+    expect(scrollZoomMock.disable).toHaveBeenCalled();
+    expect(scrollZoomMock.enable).not.toHaveBeenCalled();
+  });
+
+  it('should call map.remove on destroy', () => {
+    const removeSpy = jasmine.createSpy('remove');
+    component.map = { remove: removeSpy } as unknown as L.Map;
+    component.ngOnDestroy();
+    expect(removeSpy).toHaveBeenCalled();
+  });
+
+  it('should create weather markers with icons and handle click and popupclose', fakeAsync(() => {
+    const mockReports: WeatherReportDTO[] = [{
+      cityName: 'Wien',
+      latitude: 48.2,
+      longitude: 16.3,
+      minTemp: 5,
+      maxTemp: 25,
+      precip: 'RAIN',
+      sunDuration: null
+    }];
+
+    spyOn(component['weatherService'], 'getCachedWeatherReports').and.returnValue(of(mockReports));
+
+    const markerMock = jasmine.createSpyObj('marker', ['bindPopup', 'on', 'setIcon', 'addTo', 'getLatLng']);
+    markerMock.bindPopup.and.returnValue(markerMock);
+    markerMock.on.and.callFake((event: string, cb: () => void): L.Marker => {
+      if (event === 'click') markerMock.clickCallback = cb;
+      if (event === 'popupclose') markerMock.popupCloseCallback = cb;
+      return markerMock;
+    });
+    markerMock.getLatLng.and.returnValue(L.latLng(48.2, 16.3));
+
+    spyOn(L, 'marker').and.returnValue(markerMock);
+    spyOn(L, 'divIcon').and.callFake((options?: L.DivIconOptions): L.DivIcon => {
+      return {
+        options: options || {},
+      } as L.DivIcon;
+    });
+
+    (component as unknown as { loadWeatherMarkers: () => void }).loadWeatherMarkers();
+
+    tick();
+
+    expect(L.marker).toHaveBeenCalledWith([48.2, 16.3], jasmine.objectContaining({
+      icon: jasmine.anything(),
+      pane: 'temperaturePane'
+    }));
+
+    markerMock.clickCallback();
+    expect(markerMock.setIcon).toHaveBeenCalled();
+    expect(component['selectedTempMarker']).toBe(markerMock);
+
+    markerMock.popupCloseCallback();
+    expect(markerMock.setIcon).toHaveBeenCalled();
+    expect(component['selectedTempMarker']).toBeNull();
+
+    expect(markerMock.addTo).toHaveBeenCalledWith(component['map']);
+  }));
 });
