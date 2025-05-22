@@ -88,12 +88,14 @@ class WeatherServiceTest {
     @Test
     void getWeather_whenDataFound_shouldReturnDTOWithOriginalCoords() {
         // Arrange
-        // Mock gridUtil for *this test*
         given(gridUtil.getGridCellForCoordinates(testLat, testLon)).willReturn(testGridCellInfo);
 
-        WeatherReportDTO fetchedDto = new WeatherReportDTO(5.0, 15.0, Precipitation.DRIZZLE, 8.2, null, null);
-        // Stub the *internal* call using doReturn().when(spy).method(...)
-        doReturn(Optional.of(fetchedDto))
+        // Ensure this DTO matches the structure including sunDuration
+        WeatherReportDTO fetchedDtoFromInternalCall = new WeatherReportDTO(
+                5.0, 15.0, Precipitation.DRIZZLE, 3600.0, // Example sun duration in seconds
+                null, null // Internal DTO has null lat/lon before getWeather sets them
+        );
+        doReturn(Optional.of(fetchedDtoFromInternalCall))
                 .when(weatherService).getOrFetchGridCellData(testCellId, testBbox, testDate, targetLat, targetLon);
 
         // Act
@@ -102,15 +104,17 @@ class WeatherServiceTest {
         // Assert
         assertThat(result).isNotNull();
         assertThat(result.getMinTemp()).isEqualTo(5.0);
-        assertThat(result.getLatitude()).isEqualTo(testLat); // Check original coords
+        assertThat(result.getMaxTemp()).isEqualTo(15.0);
+        assertThat(result.getPrecip()).isEqualTo(Precipitation.DRIZZLE);
+        assertThat(result.getSunDuration()).isEqualTo(3600.0); // Assert sun duration
+        assertThat(result.getLatitude()).isEqualTo(testLat);
         assertThat(result.getLongitude()).isEqualTo(testLon);
 
         verify(gridUtil).getGridCellForCoordinates(testLat, testLon);
-        // Verify the internal method *was* called (as part of getWeather logic)
         verify(weatherService).getOrFetchGridCellData(testCellId, testBbox, testDate, targetLat, targetLon);
-        // Verify external client was NOT called directly by *this* test's scope
         verify(externalClient, never()).fetchGridData(any(), any());
     }
+
 
     @Test
     void getWeather_whenGridUtilFails_shouldThrowException() {
@@ -170,29 +174,41 @@ class WeatherServiceTest {
     @Test
     void getOrFetchGridCellData_whenApiClientSucceeds_shouldReturnOptionalDTO() {
         // Arrange
-        SpartacusFeatureCollection mockCollection = createMockFeatureCollection(targetLon, targetLat, 6.3, 12.9, 0.2);
-        // Mock the external client directly for this test
+        double expectedSunDuration = 7200.0; // 2 hours in seconds
+        SpartacusFeatureCollection mockCollection = createMockFeatureCollection(
+                targetLon, targetLat, 6.3, 12.9, 0.2, expectedSunDuration // Pass sun duration
+        );
         given(externalClient.fetchGridData(testBbox, testDate)).willReturn(Mono.just(mockCollection));
 
         // Act
-        // Call the method directly on the spy/instance
         Optional<WeatherReportDTO> result = weatherService.getOrFetchGridCellData(testCellId, testBbox, testDate, targetLat, targetLon);
 
         // Assert
         assertThat(result).isPresent();
-        assertThat(result.get().getMinTemp()).isEqualTo(6.3);
-        assertThat(result.get().getMaxTemp()).isEqualTo(12.9);
-        assertThat(result.get().getPrecip()).isEqualTo(Precipitation.DRIZZLE);
+        WeatherReportDTO dto = result.get();
+        assertThat(dto.getMinTemp()).isEqualTo(6.3);
+        assertThat(dto.getMaxTemp()).isEqualTo(12.9);
+        assertThat(dto.getPrecip()).isEqualTo(Precipitation.DRIZZLE);
+        assertThat(dto.getSunDuration()).isEqualTo(expectedSunDuration); // Assert sun duration
+        // DTO from getOrFetchGridCellData has null lat/lon before getWeather sets them
+        assertThat(dto.getLatitude()).isNull();
+        assertThat(dto.getLongitude()).isNull();
+
         verify(externalClient).fetchGridData(testBbox, testDate);
-        // Verify gridUtil was NOT called within the scope of *this* method call
         verify(gridUtil, never()).getGridCellForCoordinates(anyDouble(), anyDouble());
     }
 
     @Test
     void getOrFetchGridCellData_whenApiClientReturnsMultipleFeatures_shouldFindClosest() {
         // Arrange
-        SpartacusFeature farFeature = createSingleMockFeature(targetLon + 0.1, targetLat + 0.1, 5.0, 10.0, 0.0);
-        SpartacusFeature closeFeature = createSingleMockFeature(targetLon + 0.0001, targetLat - 0.0001, 6.3, 12.9, 0.2);
+        double sunDurationFar = 3600.0;
+        double sunDurationClose = 7200.0;
+        SpartacusFeature farFeature = createSingleMockFeature(
+                targetLon + 0.1, targetLat + 0.1, 5.0, 10.0, 0.0, sunDurationFar
+        );
+        SpartacusFeature closeFeature = createSingleMockFeature(
+                targetLon + 0.0001, targetLat - 0.0001, 6.3, 12.9, 0.2, sunDurationClose
+        );
         SpartacusFeatureCollection mockCollection = new SpartacusFeatureCollection();
         mockCollection.setFeatures(List.of(farFeature, closeFeature));
         given(externalClient.fetchGridData(testBbox, testDate)).willReturn(Mono.just(mockCollection));
@@ -202,9 +218,14 @@ class WeatherServiceTest {
 
         // Assert
         assertThat(result).isPresent();
-        assertThat(result.get().getMinTemp()).isEqualTo(6.3); // Data from closeFeature
-        assertThat(result.get().getMaxTemp()).isEqualTo(12.9);
-        assertThat(result.get().getPrecip()).isEqualTo(Precipitation.DRIZZLE);
+        WeatherReportDTO dto = result.get();
+        assertThat(dto.getMinTemp()).isEqualTo(6.3); // Data from closeFeature
+        assertThat(dto.getMaxTemp()).isEqualTo(12.9);
+        assertThat(dto.getPrecip()).isEqualTo(Precipitation.DRIZZLE);
+        assertThat(dto.getSunDuration()).isEqualTo(sunDurationClose); // Assert sun duration from closeFeature
+        assertThat(dto.getLatitude()).isNull();
+        assertThat(dto.getLongitude()).isNull();
+
         verify(externalClient).fetchGridData(testBbox, testDate);
         verify(gridUtil, never()).getGridCellForCoordinates(anyDouble(), anyDouble());
     }
@@ -240,24 +261,48 @@ class WeatherServiceTest {
         verify(gridUtil, never()).getGridCellForCoordinates(anyDouble(), anyDouble());
     }
 
-    // Helper methods remain the same
-    private SpartacusFeatureCollection createMockFeatureCollection(double lon, double lat, double minT, double maxT, double precip) {
+    // Helper methods
+    private SpartacusFeatureCollection createMockFeatureCollection(
+            double lon, double lat, double minT, double maxT, double precip, Double sunDuration // Add sunDuration
+    ) {
         SpartacusFeatureCollection collection = new SpartacusFeatureCollection();
-        collection.setFeatures(List.of(createSingleMockFeature(lon, lat, minT, maxT, precip)));
+        collection.setFeatures(List.of(createSingleMockFeature(lon, lat, minT, maxT, precip, sunDuration)));
         return collection;
     }
 
-    private SpartacusFeature createSingleMockFeature(double lon, double lat, double minT, double maxT, double precip) {
+    private SpartacusFeature createSingleMockFeature(
+            double lon, double lat, double minT, double maxT, double precip, Double sunDuration // Add sunDuration
+    ) {
         SpartacusFeature feature = new SpartacusFeature();
         SpartacusGeometry geometry = new SpartacusGeometry();
-        geometry.setCoordinates(List.of(lon, lat));
+        geometry.setCoordinates(List.of(lon, lat)); // Assuming lon is first, lat is second
         feature.setGeometry(geometry);
+
         SpartacusProperties properties = new SpartacusProperties();
-        SpartacusParameter tnParam = new SpartacusParameter(); tnParam.setData(List.of(minT));
-        SpartacusParameter txParam = new SpartacusParameter(); txParam.setData(List.of(maxT));
-        SpartacusParameter rrParam = new SpartacusParameter(); rrParam.setData(List.of(precip));
-        properties.setParameters(Map.of("TN", tnParam, "TX", txParam, "RR", rrParam));
+        Map<String, SpartacusParameter> parametersMap = new java.util.HashMap<>();
+
+        SpartacusParameter tnParam = new SpartacusParameter();
+        tnParam.setData(List.of(minT));
+        parametersMap.put("TN", tnParam);
+
+        SpartacusParameter txParam = new SpartacusParameter();
+        txParam.setData(List.of(maxT));
+        parametersMap.put("TX", txParam);
+
+        SpartacusParameter rrParam = new SpartacusParameter();
+        rrParam.setData(List.of(precip));
+        parametersMap.put("RR", rrParam);
+
+        // Add SA parameter if sunDuration is provided
+        if (sunDuration != null) {
+            SpartacusParameter saParam = new SpartacusParameter();
+            saParam.setData(List.of(sunDuration));
+            parametersMap.put("SA", saParam);
+        }
+
+        properties.setParameters(parametersMap);
         feature.setProperties(properties);
         return feature;
     }
+
 }

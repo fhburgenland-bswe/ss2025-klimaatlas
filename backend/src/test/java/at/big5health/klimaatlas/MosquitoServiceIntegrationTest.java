@@ -5,13 +5,12 @@ import okhttp3.mockwebserver.MockWebServer;
 import at.big5health.klimaatlas.dtos.MosquitoOccurrenceDTO;
 import okhttp3.mockwebserver.MockResponse;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.util.List;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 
 public class MosquitoServiceIntegrationTest {
@@ -37,17 +36,17 @@ public class MosquitoServiceIntegrationTest {
     @Test
     public void testGetOccurrences_fromMockServer() {
         String jsonResponse = """
-            {
-              "results": [
-                {
-                  "decimalLatitude": 47.062592,
-                  "decimalLongitude": 15.448713,
-                  "species": "Aedes albopictus",
-                  "eventDate": "2025-02-27T15:55:05"
-                }
-              ]
-            }
-        """;
+                    {
+                      "results": [
+                        {
+                          "decimalLatitude": 47.062592,
+                          "decimalLongitude": 15.448713,
+                          "species": "Aedes albopictus",
+                          "eventDate": "2025-02-27T15:55:05"
+                        }
+                      ]
+                    }
+                """;
 
         mockWebServer.enqueue(new MockResponse()
                 .setBody(jsonResponse)
@@ -55,12 +54,12 @@ public class MosquitoServiceIntegrationTest {
 
         List<MosquitoOccurrenceDTO> result = mosquitoService.getOccurrences();
 
-        assertFalse(result.isEmpty());
+        Assertions.assertFalse(result.isEmpty());
         MosquitoOccurrenceDTO dto = result.getLast();
-        assertEquals(47.062592, dto.getLatitude(), 0.0001);
-        assertEquals(15.448713, dto.getLongitude(), 0.0001);
-        assertEquals("Aedes albopictus", dto.getSpecies());
-        assertEquals("2025-02-27T15:55:05", dto.getEventDate());
+        Assertions.assertEquals(47.062592, dto.getLatitude(), 0.0001);
+        Assertions.assertEquals(15.448713, dto.getLongitude(), 0.0001);
+        Assertions.assertEquals("Aedes albopictus", dto.getSpecies());
+        Assertions.assertEquals("2025-02-27T15:55:05", dto.getEventDate());
     }
 
 }

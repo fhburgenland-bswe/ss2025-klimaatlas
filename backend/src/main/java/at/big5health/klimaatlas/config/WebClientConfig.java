@@ -1,4 +1,4 @@
-package at.big5health.klimaatlas;
+package at.big5health.klimaatlas.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

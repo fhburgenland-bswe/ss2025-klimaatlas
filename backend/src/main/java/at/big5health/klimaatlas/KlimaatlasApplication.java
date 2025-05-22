@@ -1,8 +1,10 @@
 package at.big5health.klimaatlas;
 
+import at.big5health.klimaatlas.config.CacheConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;   // Already on CacheConfig
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling; // Already on CacheConfig
 
 /**
@@ -29,8 +31,9 @@ import org.springframework.scheduling.annotation.EnableScheduling; // Already on
  * @see CacheConfig
  */
 @SpringBootApplication
-@EnableCaching   // Often redundant if also on a specific @Configuration class like CacheConfig, but harmless.
-@EnableScheduling // Often redundant if also on a specific @Configuration class like CacheConfig, but harmless.
+@EnableCaching
+@EnableScheduling
+@EnableAsync
 public class KlimaatlasApplication {
 
 	/**

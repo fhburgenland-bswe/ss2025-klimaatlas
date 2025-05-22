@@ -2,7 +2,6 @@ package at.big5health.klimaatlas.controllers;
 
 import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.grid.GridTemperature;
-import at.big5health.klimaatlas.services.GridCacheService;
 import at.big5health.klimaatlas.services.WeatherService;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * REST controller for retrieving weather-related information.
@@ -29,7 +27,6 @@ import java.util.List;
  * Dependencies are injected via constructor using Lombok's {@code @AllArgsConstructor}.
  *
  * @see WeatherService
- * @see GridCacheService
  * @see WeatherReportDTO
  * @see GridTemperature
  * @since 1.0.0
@@ -41,8 +38,6 @@ import java.util.List;
 public class WeatherController {
 
     private final WeatherService weatherService;
-    private final GridCacheService gridCacheService;
-
     // No explicit constructor needed due to @AllArgsConstructor.
 
     /**
@@ -97,19 +92,19 @@ public class WeatherController {
      * @see GridCacheService#getAllTemperatureGridPoints()
      * @see GridTemperature
      */
-    @GetMapping("/temperature-grid")
-    @ResponseStatus(HttpStatus.OK) //is implicit with ResponseEntity.ok() but can be added for clarity
-    public ResponseEntity<List<GridTemperature>> getTemperatureGridPoints(
-            @RequestParam(required = false) String state) { // 'required = false' makes it optional
-
-        List<GridTemperature> gridPoints;
-
-        if (state != null && !state.isEmpty()) {
-            gridPoints = gridCacheService.getTemperatureGridForState(state);
-        } else {
-            gridPoints = gridCacheService.getAllTemperatureGridPoints();
-        }
-
-        return ResponseEntity.ok(gridPoints);
-    }
+//    @GetMapping("/temperature-grid")
+//    @ResponseStatus(HttpStatus.OK) //is implicit with ResponseEntity.ok() but can be added for clarity
+//    public ResponseEntity<List<GridTemperature>> getTemperatureGridPoints(
+//            @RequestParam(required = false) String state) { // 'required = false' makes it optional
+//
+//        List<GridTemperature> gridPoints;
+//
+//        if (state != null && !state.isEmpty()) {
+//            gridPoints = gridCacheService.getTemperatureGridForState(state);
+//        } else {
+//            gridPoints = gridCacheService.getAllTemperatureGridPoints();
+//        }
+//
+//        return ResponseEntity.ok(gridPoints);
+//    }
 }
