@@ -277,7 +277,7 @@ describe('MapComponent', () => {
   
   
 
-  it('should set hasError to true on mosquitoService error', fakeAsync(() => {
+  it('should set hasMosquitoError to true on mosquitoService error', fakeAsync(() => {
     spyOn(console, 'error');
   
     fixture.detectChanges();
@@ -293,7 +293,7 @@ describe('MapComponent', () => {
   
     tick();
   
-    expect(component.hasError).toBeTrue();
+    expect(component.hasMosquitoError).toBeTrue();
   }));
   
   it('should format valid date correctly', () => {

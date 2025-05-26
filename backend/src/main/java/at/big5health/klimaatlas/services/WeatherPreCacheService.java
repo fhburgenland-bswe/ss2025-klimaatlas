@@ -14,7 +14,16 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 
+/**
+ * Service responsible for pre-caching weather data for all configured Austrian population centers.
+ * Weather data is fetched from the external API and cached during application startup
+ * and as a scheduled daily job. Pre-caching ensures that common queries (e.g. for the previous day)
+ * are fast and avoid unnecessary API calls from the frontend.
+ * This class depends on {@link WeatherService} for data retrieval and
+ * {@link PopulationCenterService} for loading the list of cities.
+ */
 @Service
 public class WeatherPreCacheService {
 
@@ -22,10 +31,19 @@ public class WeatherPreCacheService {
 
     private final WeatherService weatherService;
 
-    public WeatherPreCacheService(WeatherService weatherService) {
+    private final PopulationCenterService populationCenterService;
+
+    public WeatherPreCacheService(
+            WeatherService weatherService,
+            PopulationCenterService populationCenterService) {
         this.weatherService = weatherService;
+        this.populationCenterService = populationCenterService;
     }
 
+    /**
+     * Triggers the pre-caching process once the application is fully started.
+     * This runs asynchronously to avoid blocking application startup.
+     */
     @EventListener(ApplicationReadyEvent.class)
     @Async
     public void preCacheOnStartup() {
@@ -34,6 +52,10 @@ public class WeatherPreCacheService {
         LOG.info("Initial pre-cache task submitted/completed (asynchronously).");
     }
 
+    /**
+     * Runs daily at 10:00 CET and pre-caches weather data for all population centers.
+     * Intended to refresh cached data with up-to-date results.
+     */
     @Scheduled(cron = "0 0 10 * * *", zone = "CET")
     public void scheduledPreCache() {
         ZonedDateTime cetTime = ZonedDateTime.now(ZoneId.of("CET"));
@@ -42,6 +64,12 @@ public class WeatherPreCacheService {
         LOG.info("Daily pre-cache completed at {} CET.", ZonedDateTime.now(ZoneId.of("CET")));
     }
 
+    /**
+     * Internal method that performs the actual pre-caching logic.
+     * Fetches weather data for all centers for the previous day and stores results in the cache.
+     *
+     * @param triggerSource a label indicating whether this was called by "Startup", "Scheduled", etc.
+     */
     public void performPreCaching(String triggerSource) {
         LocalDate dateToFetch = LocalDate.now().minusDays(1);
         LOG.info("[{}] Pre-caching weather data for date: {}", triggerSource, dateToFetch);
@@ -50,7 +78,9 @@ public class WeatherPreCacheService {
         int failureCount = 0;
         long delayBetweenRequestsMs = 250;
 
-        for (AustrianPopulationCenter center : AustrianPopulationCenter.values()) {
+        List<AustrianPopulationCenter> centers = populationCenterService.getAllCenters();
+
+        for (AustrianPopulationCenter center : centers) {
             LOG.debug("[{}] Attempting to pre-cache data for: {} using representative point (Lat:{}, Lon:{}) on {}",
                     triggerSource, center.getDisplayName(), center.getRepresentativeLatitude(), center.getRepresentativeLongitude(), dateToFetch);
             try {
