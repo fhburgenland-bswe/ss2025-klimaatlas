@@ -3,6 +3,7 @@ package at.big5health.klimaatlas.controllers;
 import at.big5health.klimaatlas.config.AustrianPopulationCenter;
 import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.grid.GridTemperature;
+import at.big5health.klimaatlas.services.PopulationCenterService;
 import at.big5health.klimaatlas.services.WeatherService;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -45,6 +46,8 @@ public class WeatherController {
     private final WeatherService weatherService;
 
     private final CacheManager cacheManager;
+
+    private final PopulationCenterService populationCenterService;
     // No explicit constructor needed due to @AllArgsConstructor.
 
     /**
@@ -83,33 +86,15 @@ public class WeatherController {
     }
 
     /**
-     * Retrieves cached weather data for all predefined Austrian population centers for a specific date.
-     * <p>
-     * This endpoint returns a list of {@link WeatherReportDTO} objects representing weather information
-     * for each location defined in the {@link AustrianPopulationCenter} enum. It directly accesses the
-     * Spring cache named {@code "weatherCache"} and does not trigger any external API calls or data fetching
-     * via service methods.
-     * <p>
-     * The method guarantees that only fully cached datasets are returned. If any of the required
-     * entries are missing from the cache, the endpoint will return {@code 204 No Content} to indicate that
-     * a complete dataset is not yet available.
-     * <p>
-     * Typical use case: display pre-cached weather data (e.g., pins on a map) on the frontend without
-     * risking API latency or failures.
+     * Returns cached weather data for all configured Austrian population centers on a specific date.
+     * The data is read directly from the {@code weatherCache} without triggering external API calls.
+     * Only fully cached datasets are returned — if any entry is missing, a {@code 204 No Content} is returned.
+     * Typical usage: frontend loads this on startup to display preloaded weather data on the map.
      *
-     * @param actualDate The date for which the cached weather data is requested, in ISO format (YYYY-MM-DD).
-     *                   Typically this should match the date used in the application's scheduled or startup
-     *                   pre-caching (usually yesterday).
-     * @return A {@link ResponseEntity} containing:
-     *         <ul>
-     *             <li>HTTP 200 (OK) and a full list of {@link WeatherReportDTO} if all data is found in the cache.</li>
-     *             <li>HTTP 204 (No Content) if any city is missing from the cache.</li>
-     *             <li>HTTP 500 (Internal Server Error) if the cache could not be accessed.</li>
-     *         </ul>
-     *
-     * @see WeatherReportDTO
-     * @see AustrianPopulationCenter
-     * @see org.springframework.cache.CacheManager
+     * @param actualDate the date for which cached weather data is requested (ISO format: YYYY-MM-DD)
+     * @return 200 OK with list of {@link WeatherReportDTO} if all entries are found in cache,
+     *         204 No Content if any are missing,
+     *         or 500 Internal Server Error if cache access fails
      */
     @GetMapping("/cached")
     public ResponseEntity<List<WeatherReportDTO>> getAllCachedWeatherData(
@@ -122,7 +107,9 @@ public class WeatherController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
-        for (AustrianPopulationCenter center : AustrianPopulationCenter.values()) {
+        List<AustrianPopulationCenter> centers = populationCenterService.getAllCenters();
+
+        for (AustrianPopulationCenter center : centers) {
             String key = center.getRepresentativeLatitude() + "_" + center.getRepresentativeLongitude() + "_" + actualDate;
             WeatherReportDTO cached = cache.get(key, WeatherReportDTO.class);
 
@@ -131,45 +118,9 @@ public class WeatherController {
             }
 
             cached.setCityName(center.getDisplayName());
-
             results.add(cached);
         }
 
         return ResponseEntity.ok(results);
     }
-
-
-    /**
-     * Retrieves temperature grid data points, optionally filtered by state.
-     * <p>
-     * If a 'state' query parameter is provided and is not empty, the grid points
-     * will be filtered for that specific state. Otherwise, all available temperature
-     * grid points are returned.
-     *
-     * @param state An optional query parameter representing the state (e.g., "Tyrol", "Vienna")
-     *              to filter the temperature grid points. If null or empty, all points are returned.
-     * @return A {@link ResponseEntity} containing a list of
-     *         {@link GridTemperature} objects and HTTP status 200 (OK).
-     *         The list may be empty if no data is found for the given criteria.
-     *         May return HTTP 404 (Not Found) if data for a specific state is requested but not found.
-     * @see GridCacheService#getTemperatureGridForState(String)
-     * @see GridCacheService#getAllTemperatureGridPoints()
-     * @see GridTemperature
-     */
-//    @GetMapping("/temperature-grid")
-//    @ResponseStatus(HttpStatus.OK) //is implicit with ResponseEntity.ok() but can be added for clarity
-//    public ResponseEntity<List<GridTemperature>> getTemperatureGridPoints(
-//            @RequestParam(required = false) String state) { // 'required = false' makes it optional
-//
-//        List<GridTemperature> gridPoints;
-//
-//        if (state != null && !state.isEmpty()) {
-//            gridPoints = gridCacheService.getTemperatureGridForState(state);
-//        } else {
-//            gridPoints = gridCacheService.getAllTemperatureGridPoints();
-//        }
-//
-//        return ResponseEntity.ok(gridPoints);
-//    }
-
 }

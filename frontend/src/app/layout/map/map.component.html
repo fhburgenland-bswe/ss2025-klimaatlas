@@ -4,7 +4,7 @@
     <div id="map" style="height: 100vh; width: 100%;"></div>
   </div>
 </div>
-<div *ngIf="hasError" class="popup-backdrop">
+<div *ngIf="hasError|| hasMosquitoError" class="popup-backdrop">
   <div class="error">
     <div class="error__icon">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">

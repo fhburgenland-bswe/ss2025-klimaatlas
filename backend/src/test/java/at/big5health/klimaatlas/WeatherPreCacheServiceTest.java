@@ -6,6 +6,7 @@ import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.exceptions.ErrorMessages;
 import at.big5health.klimaatlas.exceptions.ExternalApiException;
 import at.big5health.klimaatlas.exceptions.WeatherDataNotFoundException;
+import at.big5health.klimaatlas.services.PopulationCenterService;
 import at.big5health.klimaatlas.services.WeatherPreCacheService;
 import at.big5health.klimaatlas.services.WeatherService;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +23,7 @@ import org.springframework.context.ConfigurableApplicationContext;
 
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,6 +47,9 @@ class WeatherPreCacheServiceTest {
 
     @Mock
     private SpringApplication mockSpringApplication;
+
+    @Mock
+    private PopulationCenterService populationCenterService;
 
     @InjectMocks
     private WeatherPreCacheService weatherPreCacheService;
@@ -81,169 +86,97 @@ class WeatherPreCacheServiceTest {
 
     @Test
     void performPreCaching_whenAllApiCallsSucceed_shouldCallWeatherServiceForEachCenter() {
-        AustrianPopulationCenter center1 = AustrianPopulationCenter.VIENNA;
-        AustrianPopulationCenter center2 = AustrianPopulationCenter.GRAZ;
-        AustrianPopulationCenter[] testCenters = {center1, center2};
+        AustrianPopulationCenter center1 = new AustrianPopulationCenter("Vienna", 48.2082, 16.3738, 48.12, 16.18, 48.33, 16.58);
+        AustrianPopulationCenter center2 = new AustrianPopulationCenter("Graz", 47.0707, 15.4395, 46.99, 15.35, 47.12, 15.52);
+        List<AustrianPopulationCenter> testCenters = List.of(center1, center2);
 
-        try (MockedStatic<AustrianPopulationCenter> mockedEnum = Mockito.mockStatic(AustrianPopulationCenter.class)) {
-            mockedEnum.when(AustrianPopulationCenter::values).thenReturn(testCenters);
+        when(populationCenterService.getAllCenters()).thenReturn(testCenters);
 
-            // Stub successful calls
-            when(weatherService.getWeather(
-                    eq(center1.getDisplayName()),
-                    eq(center1.getRepresentativeLongitude()),
-                    eq(center1.getRepresentativeLatitude()),
-                    eq(expectedDateToFetch)
-            )).thenReturn(dummySuccessDTO);
-            when(weatherService.getWeather(
-                    eq(center2.getDisplayName()),
-                    eq(center2.getRepresentativeLongitude()),
-                    eq(center2.getRepresentativeLatitude()),
-                    eq(expectedDateToFetch)
-            )).thenReturn(dummySuccessDTO);
+        when(weatherService.getWeather(eq(center1.getDisplayName()), eq(center1.getRepresentativeLongitude()), eq(center1.getRepresentativeLatitude()), eq(expectedDateToFetch)))
+                .thenReturn(dummySuccessDTO);
+        when(weatherService.getWeather(eq(center2.getDisplayName()), eq(center2.getRepresentativeLongitude()), eq(center2.getRepresentativeLatitude()), eq(expectedDateToFetch)))
+                .thenReturn(dummySuccessDTO);
 
+        weatherPreCacheService.performPreCaching("Test");
 
-            weatherPreCacheService.performPreCaching("Test");
-
-            verify(weatherService, times(1)).getWeather(
-                    eq(center1.getDisplayName()),
-                    eq(center1.getRepresentativeLongitude()),
-                    eq(center1.getRepresentativeLatitude()),
-                    eq(expectedDateToFetch)
-            );
-            verify(weatherService, times(1)).getWeather(
-                    eq(center2.getDisplayName()),
-                    eq(center2.getRepresentativeLongitude()),
-                    eq(center2.getRepresentativeLatitude()),
-                    eq(expectedDateToFetch)
-            );
-        }
+        verify(weatherService, times(1)).getWeather(eq(center1.getDisplayName()), eq(center1.getRepresentativeLongitude()), eq(center1.getRepresentativeLatitude()), eq(expectedDateToFetch));
+        verify(weatherService, times(1)).getWeather(eq(center2.getDisplayName()), eq(center2.getRepresentativeLongitude()), eq(center2.getRepresentativeLatitude()), eq(expectedDateToFetch));
     }
 
     @Test
     void performPreCaching_whenSomeApiCallsFail_shouldContinueAndLog() {
-        AustrianPopulationCenter center1 = AustrianPopulationCenter.VIENNA;
-        AustrianPopulationCenter center2 = AustrianPopulationCenter.LINZ; // Fails
-        AustrianPopulationCenter center3 = AustrianPopulationCenter.GRAZ; // Succeeds
-        AustrianPopulationCenter[] testCenters = {center1, center2, center3};
+        AustrianPopulationCenter center1 = new AustrianPopulationCenter("Vienna", 48.2082, 16.3738, 48.12, 16.18, 48.33, 16.58);
+        AustrianPopulationCenter center2 = new AustrianPopulationCenter("Linz", 48.3069, 14.2858, 48.22, 14.18, 48.37, 14.40); // Fails
+        AustrianPopulationCenter center3 = new AustrianPopulationCenter("Graz", 47.0707, 15.4395, 46.99, 15.35, 47.12, 15.52); // Succeeds
 
-        try (MockedStatic<AustrianPopulationCenter> mockedEnum = Mockito.mockStatic(AustrianPopulationCenter.class)) {
-            mockedEnum.when(AustrianPopulationCenter::values).thenReturn(testCenters);
+        List<AustrianPopulationCenter> testCenters = List.of(center1, center2, center3);
 
-            // Stub successful call for center1
-            when(weatherService.getWeather(
-                    eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)
-            )).thenReturn(dummySuccessDTO);
+        when(populationCenterService.getAllCenters()).thenReturn(testCenters);
 
-            // Stub failing call for center2
-            doThrow(new WeatherDataNotFoundException(ErrorMessages.WEATHER_DATA_NOT_FOUND))
-                    .when(weatherService).getWeather(
-                            eq(center2.getDisplayName()),
-                            anyDouble(),
-                            anyDouble(),
-                            eq(expectedDateToFetch));
+        when(weatherService.getWeather(eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)))
+                .thenReturn(dummySuccessDTO);
 
-            // Stub successful call for center3
-            when(weatherService.getWeather(
-                    eq(center3.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)
-            )).thenReturn(dummySuccessDTO);
+        doThrow(new WeatherDataNotFoundException(ErrorMessages.WEATHER_DATA_NOT_FOUND))
+                .when(weatherService).getWeather(eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
 
-            weatherPreCacheService.performPreCaching("TestWithFailures");
+        when(weatherService.getWeather(eq(center3.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)))
+                .thenReturn(dummySuccessDTO);
 
-            verify(weatherService, times(1)).getWeather(
-                    eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
-            verify(weatherService, times(1)).getWeather(
-                    eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
-            verify(weatherService, times(1)).getWeather(
-                    eq(center3.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
-        }
+        weatherPreCacheService.performPreCaching("TestWithFailures");
+
+        verify(weatherService, times(1)).getWeather(eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
+        verify(weatherService, times(1)).getWeather(eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
+        verify(weatherService, times(1)).getWeather(eq(center3.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
     }
 
     @Test
     void performPreCaching_whenExternalApiExceptionOccurs_shouldHandleAndContinue() {
-        AustrianPopulationCenter center1 = AustrianPopulationCenter.VIENNA; // Succeeds
-        AustrianPopulationCenter center2 = AustrianPopulationCenter.SALZBURG; // Fails
-        AustrianPopulationCenter[] testCenters = {center1, center2};
+        AustrianPopulationCenter center1 = new AustrianPopulationCenter("Vienna", 48.2082, 16.3738, 48.12, 16.18, 48.33, 16.58); // Succeeds
+        AustrianPopulationCenter center2 = new AustrianPopulationCenter("Salzburg", 47.8095, 13.0550, 47.75, 12.98, 47.85, 13.12); // Fails
 
-        try (MockedStatic<AustrianPopulationCenter> mockedEnum = Mockito.mockStatic(AustrianPopulationCenter.class)) {
-            mockedEnum.when(AustrianPopulationCenter::values).thenReturn(testCenters);
+        List<AustrianPopulationCenter> testCenters = List.of(center1, center2);
+        when(populationCenterService.getAllCenters()).thenReturn(testCenters);
 
-            // Stub successful call for center1
-            when(weatherService.getWeather(
-                    eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)
-            )).thenReturn(dummySuccessDTO);
+        // Successful call for center1
+        when(weatherService.getWeather(
+                eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)))
+                .thenReturn(dummySuccessDTO);
 
-            // Stub failing call for center2
-            doThrow(new ExternalApiException(ErrorMessages.EXTERNAL_API_FAILURE))
-                    .when(weatherService).getWeather(
-                            eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
+        // Failing call for center2
+        doThrow(new ExternalApiException(ErrorMessages.EXTERNAL_API_FAILURE))
+                .when(weatherService).getWeather(
+                        eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
 
-            weatherPreCacheService.performPreCaching("TestExternalApiEx");
+        weatherPreCacheService.performPreCaching("TestExternalApiEx");
 
-            verify(weatherService, times(1)).getWeather(
-                    eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
-            verify(weatherService, times(1)).getWeather(
-                    eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
-        }
+        verify(weatherService).getWeather(eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
+        verify(weatherService).getWeather(eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
     }
 
     @Test
     void performPreCaching_whenInterruptedDuringSleep_shouldStopProcessingAndSetInterruptFlag() {
-        // This test is still tricky for Thread.sleep().
-        // We'll simulate an interruption by having the *WeatherService* call throw a RuntimeException
-        // that wraps an InterruptedException, or just a generic RuntimeException to test the generic catch block.
-        // A true test of Thread.sleep interruption requires more advanced techniques or SUT refactoring.
+        AustrianPopulationCenter center1 = new AustrianPopulationCenter("Vienna", 48.2082, 16.3738, 48.12, 16.18, 48.33, 16.58); // Processed
+        AustrianPopulationCenter center2 = new AustrianPopulationCenter("Graz", 47.0707, 15.4395, 46.99, 15.35, 47.12, 15.52); // Simulated interruption
+        AustrianPopulationCenter center3 = new AustrianPopulationCenter("Linz", 48.3069, 14.2858, 48.22, 14.18, 48.37, 14.40); // Should still be processed
 
-        AustrianPopulationCenter center1 = AustrianPopulationCenter.VIENNA; // Processed
-        AustrianPopulationCenter center2 = AustrianPopulationCenter.GRAZ;  // This call will "cause" interruption
-        AustrianPopulationCenter center3 = AustrianPopulationCenter.LINZ;  // Should not be processed
+        List<AustrianPopulationCenter> testCenters = List.of(center1, center2, center3);
+        when(populationCenterService.getAllCenters()).thenReturn(testCenters);
 
-        AustrianPopulationCenter[] testCenters = {center1, center2, center3};
+        when(weatherService.getWeather(eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)))
+                .thenReturn(dummySuccessDTO);
 
-        try (MockedStatic<AustrianPopulationCenter> mockedEnum = Mockito.mockStatic(AustrianPopulationCenter.class)) {
-            mockedEnum.when(AustrianPopulationCenter::values).thenReturn(testCenters);
+        // Simulated "interruption" via exception
+        doThrow(new RuntimeException("Simulated error during processing"))
+                .when(weatherService).getWeather(eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
 
-            // Stub successful call for center1
-            when(weatherService.getWeather(
-                    eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)
-            )).thenReturn(dummySuccessDTO);
+        // center3 will still be processed because only actual `InterruptedException` stops the loop
+        when(weatherService.getWeather(eq(center3.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)))
+                .thenReturn(dummySuccessDTO);
 
-            // Simulate an issue during the processing of center2 that might lead to an interruption being caught
-            // For simplicity, let's use a generic RuntimeException here, as your code catches `Exception e`
-            // and then `InterruptedException` specifically.
-            // To test the InterruptedException catch block more directly, you'd need to mock Thread.sleep.
-            // Let's assume the generic Exception catch block is hit.
-            // If you want to test the InterruptedException block specifically, you'd need to refactor
-            // WeatherPreCacheService to use an injectable Sleeper.
-            doThrow(new RuntimeException("Simulated error during center2 processing, mimicking interruption effect"))
-                    .when(weatherService).getWeather(
-                            eq(center2.getDisplayName()),
-                            anyDouble(),
-                            anyDouble(),
-                            eq(expectedDateToFetch));
+        weatherPreCacheService.performPreCaching("TestInterruptionEffect");
 
-            // In performPreCaching_whenInterruptedDuringSleep_shouldStopProcessingAndSetInterruptFlag
-
-// ... (stubbing for center1 and center2 as before) ...
-
-// Stub successful call for center3 because the loop will continue
-            when(weatherService.getWeather(
-                    eq(center3.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)
-            )).thenReturn(dummySuccessDTO);
-
-
-            weatherPreCacheService.performPreCaching("TestInterruptionEffect");
-
-            // Verify center1 was processed
-            verify(weatherService, times(1)).getWeather(
-                    eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
-            // Verify center2 was attempted (and threw)
-            verify(weatherService, times(1)).getWeather(
-                    eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
-            // Verify center3 WAS processed because the generic exception for center2 didn't break the loop
-            verify(weatherService, times(1)).getWeather(
-                    eq(center3.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
-
-        }
+        verify(weatherService).getWeather(eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
+        verify(weatherService).getWeather(eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
+        verify(weatherService).getWeather(eq(center3.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
     }
 }

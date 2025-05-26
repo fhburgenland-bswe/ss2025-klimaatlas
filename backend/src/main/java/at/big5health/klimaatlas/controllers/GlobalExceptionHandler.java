@@ -5,6 +5,7 @@ import at.big5health.klimaatlas.exceptions.ErrorMessages;
 import at.big5health.klimaatlas.exceptions.ExternalApiException;
 import at.big5health.klimaatlas.exceptions.InvalidInputException;
 import at.big5health.klimaatlas.exceptions.WeatherDataNotFoundException;
+import at.big5health.klimaatlas.exceptions.CsvParseException;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDate;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -169,5 +171,24 @@ public class GlobalExceptionHandler {
         LOG.error("An unexpected error occurred: {}", e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse(ErrorMessages.UNEXPECTED_ERROR.getMessage()));
+    }
+
+    /**
+     * Handles {@link CsvParseException} thrown during CSV parsing of population centers.
+     * Returns a structured JSON response with status 400 and a list of individual error messages
+     * explaining the reason(s) the CSV file could not be processed.
+     * Intended for use by the frontend to display detailed validation issues.
+     *
+     * @param ex the {@link CsvParseException} containing parsing error details
+     * @return a {@link ResponseEntity} with HTTP 400 and a JSON body containing the error list
+     */
+    @ExceptionHandler(CsvParseException.class)
+    public ResponseEntity<?> handleCsvParseException(CsvParseException ex) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of(
+                        "message", "CSV parsing error",
+                        "errors", ex.getErrors()
+                ));
     }
 }

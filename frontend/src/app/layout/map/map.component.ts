@@ -22,6 +22,7 @@ import { createTemperaturePinSvg } from '../../utils/temperature-pins';
 })
 export class MapComponent implements AfterViewInit, OnDestroy {
   hasError = false;
+  hasMosquitoError = false;
   public map!: L.Map;
   private selectedTempMarker: L.Marker | null = null;
   private central: L.LatLngExpression = [47.75, 13.0];
@@ -256,12 +257,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
             });
   
           marker.addTo(this.map);
-          this.hasError = false;
+          this.hasMosquitoError = false;
         });
       },
       error: (err) => {
         console.error('Error loading mosquito data:', err);
-        this.hasError = true;
+        this.hasMosquitoError = true;
       }
     });
   }
