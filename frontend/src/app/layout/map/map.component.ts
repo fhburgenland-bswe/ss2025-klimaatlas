@@ -12,18 +12,22 @@ import { WeatherService } from '../../services/weather.service';
 import { WeatherReportDTO } from '../../interfaces/weather';
 import { translatePrecipitation } from '../../utils/precipitation-translator';
 import { createTemperaturePinSvg } from '../../utils/temperature-pins';
+import { LensSelectorComponent } from "../lens-selector/lens-selector.component";
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LensSelectorComponent],
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.scss']
 })
 export class MapComponent implements AfterViewInit, OnDestroy {
   hasError = false;
-  hasMosquitoError = false;
   errorMessages: string[] = [];
+
+  private mosquitoLayer = L.layerGroup();
+  private temperatureLayer = L.layerGroup();
+
   public map!: L.Map;
   private selectedTempMarker: L.Marker | null = null;
   private central: L.LatLngExpression = [47.75, 13.0];
@@ -81,8 +85,6 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     });
 
     this.loadRegions();
-    this.loadMosquitoMarkers();
-    this.loadWeatherMarkers();
   }
 
   handleMapScroll(event: WheelEvent): void {
@@ -154,6 +156,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   }
 
   private loadWeatherMarkers(): void {
+    this.temperatureLayer.clearLayers();
+
     this.weatherService.getCachedWeatherReports().subscribe({
       next: (reports: WeatherReportDTO[]) => {
         this.errorMessages = [];
@@ -217,8 +221,9 @@ export class MapComponent implements AfterViewInit, OnDestroy {
               }
             });
 
-          marker.addTo(this.map);
+          this.temperatureLayer.addLayer(marker);
         });
+        this.map.addLayer(this.temperatureLayer);
       },
       error: (err) => {
         console.error('Fehler beim Laden der Wetterdaten:', err);
@@ -239,6 +244,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   }
 
   private loadMosquitoMarkers(): void {
+    this.mosquitoLayer.clearLayers();
+
     this.mosquitoService.getMosquitoOccurrences().subscribe({
       next: (occurrences: MosquitoOccurrence[]) => {
         occurrences.forEach(occurrence => {
@@ -260,23 +267,32 @@ export class MapComponent implements AfterViewInit, OnDestroy {
               this.selectionService.setSelectedOccurrence(occurrence);
             })
             .on('popupclose', () => {
-              if (this.selectedMarker) {
-                this.selectedMarker.setIcon(this.mosquitoIcon);
+              if (this.selectedMarker === marker && this.map.hasLayer(marker)) {
+                marker.setIcon(this.mosquitoIcon);
+                this.selectedMarker = null;
               }
-              
-              marker.setIcon(this.mosquitoIcon);
-              this.selectedMarker = marker;
-
               this.selectionService.setSelectedOccurrence(null);
             });
   
-          marker.addTo(this.map);
-          this.hasMosquitoError = false;
+          this.mosquitoLayer.addLayer(marker);
         });
+        this.map.addLayer(this.mosquitoLayer);
+        this.hasError = false;
       },
       error: (err) => {
         console.error('Error loading mosquito data:', err);
-        this.hasMosquitoError = true;
+        this.hasError = true;
+        this.errorMessages = [];
+
+        if (err.error && err.error.errors) {
+          this.errorMessages = err.error.errors;
+        } else if (err.status === 204) {
+          this.errorMessages = ['No cached weather data available.'];
+        } else if (err.status === 0) {
+          this.errorMessages = ['Could not connect to the server.'];
+        } else {
+          this.errorMessages = ['An unknown error occurred.'];
+        }
       }
     });
   }
@@ -297,5 +313,42 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   closePopup() {
     this.hasError = false;
     this.errorMessages = [];
+  }
+
+  onLensSelected(lens: 'mosquito' | 'temperature'): void {
+    if (this.selectedMarker && this.map.hasLayer(this.selectedMarker)) {
+      this.map.removeLayer(this.selectedMarker);
+    }
+    this.selectedMarker = null;
+
+    if (this.selectedTempMarker) {
+      this.selectedTempMarker.setIcon(
+        L.divIcon({
+          className: '',
+          html: createTemperaturePinSvg(0),
+          iconSize: [50, 70],
+          iconAnchor: [25, 70],
+          popupAnchor: [0, -70],
+          pane: 'temperaturePane'
+        })
+      );
+      this.selectedTempMarker = null;
+    }
+
+    if (this.map.hasLayer(this.mosquitoLayer)) {
+      this.map.removeLayer(this.mosquitoLayer);
+    }
+    if (this.map.hasLayer(this.temperatureLayer)) {
+      this.map.removeLayer(this.temperatureLayer);
+    }
+
+    this.mosquitoLayer.clearLayers();
+    this.temperatureLayer.clearLayers();
+
+    if (lens === 'mosquito') {
+      this.loadMosquitoMarkers();
+    } else if (lens === 'temperature') {
+      this.loadWeatherMarkers();
+    }
   }
 }

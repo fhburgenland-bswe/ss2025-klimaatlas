@@ -1,0 +1,14 @@
+<div class="lens-selector">
+  <button class="lens-icon" [class.rotating]="isOpen" (click)="toggleDropdown()">
+    🔍
+  </button>
+
+  <ul class="lens-dropdown" [class.open]="isOpen">
+    <li tabindex="0" (click)="selectLens('mosquito')" (keydown.enter)="selectLens('mosquito')">
+      <img src="../../../assets/img/lens_mosquito.png" alt="mosquito lens" />
+    </li>
+    <li tabindex="0" (click)="selectLens('temperature')" (keydown.enter)="selectLens('temperature')">
+      <img src="../../../assets/img/lens_temperature.png" alt="temperature lens" />
+    </li>
+  </ul>
+</div>
