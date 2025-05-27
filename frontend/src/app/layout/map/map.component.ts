@@ -23,6 +23,7 @@ import { createTemperaturePinSvg } from '../../utils/temperature-pins';
 export class MapComponent implements AfterViewInit, OnDestroy {
   hasError = false;
   hasMosquitoError = false;
+  errorMessages: string[] = [];
   public map!: L.Map;
   private selectedTempMarker: L.Marker | null = null;
   private central: L.LatLngExpression = [47.75, 13.0];
@@ -155,6 +156,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private loadWeatherMarkers(): void {
     this.weatherService.getCachedWeatherReports().subscribe({
       next: (reports: WeatherReportDTO[]) => {
+        this.errorMessages = [];
+        this.hasError = false;
         reports.forEach(report => {
           const icon = L.divIcon({
             className: '',
@@ -220,6 +223,17 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       error: (err) => {
         console.error('Fehler beim Laden der Wetterdaten:', err);
         this.hasError = true;
+        this.errorMessages = [];
+
+        if (err.error && err.error.errors) {
+          this.errorMessages = err.error.errors;
+        } else if (err.status === 204) {
+          this.errorMessages = ['No cached weather data available.'];
+        } else if (err.status === 0) {
+          this.errorMessages = ['Could not connect to the server.'];
+        } else {
+          this.errorMessages = ['An unknown error occurred.'];
+        }
       }
     });
   }
@@ -282,5 +296,6 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
   closePopup() {
     this.hasError = false;
+    this.errorMessages = [];
   }
 }
