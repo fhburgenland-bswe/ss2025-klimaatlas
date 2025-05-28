@@ -5,6 +5,8 @@ import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.grid.GridTemperature;
 import at.big5health.klimaatlas.services.PopulationCenterService;
 import at.big5health.klimaatlas.services.WeatherService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -41,6 +43,7 @@ import java.util.List;
 @RequestMapping("/dailyweather")
 @CrossOrigin("*") // Allows all origins
 @AllArgsConstructor // Lombok annotation for constructor injection
+@Tag(name = "Weather", description = "API for the daily weather report")
 public class WeatherController {
 
     private final WeatherService weatherService;
@@ -75,6 +78,7 @@ public class WeatherController {
      */
     @GetMapping
     @ResponseStatus(HttpStatus.OK) // Explicitly states the success status
+    @ApiResponse(responseCode = "200", description = "Success status")
     public ResponseEntity<WeatherReportDTO> getWeather(
             @RequestParam String cityName, // Spring automatically makes this required
             @RequestParam Double longitude,
@@ -97,6 +101,7 @@ public class WeatherController {
      *         or 500 Internal Server Error if cache access fails
      */
     @GetMapping("/cached")
+    @ApiResponse(responseCode = "200", description = "Success status")
     public ResponseEntity<List<WeatherReportDTO>> getAllCachedWeatherData(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate actualDate) {
 
