@@ -2,6 +2,8 @@ package at.big5health.klimaatlas.controllers;
 
 import at.big5health.klimaatlas.dtos.MosquitoOccurrenceDTO;
 import at.big5health.klimaatlas.services.MosquitoService;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -20,6 +22,7 @@ import java.util.List;
 @RequestMapping("/mosquitoes")
 @CrossOrigin("*")
 @AllArgsConstructor
+@Tag(name = "Mosquito occurrence", description = "API for accessing mosquito occurrence data")
 public class MosquitoController {
 
     private final MosquitoService mosquitoService;
@@ -33,6 +36,7 @@ public class MosquitoController {
      * @return a {@link ResponseEntity} containing the list of mosquito occurrences
      */
     @GetMapping
+    @ApiResponse(responseCode = "200", description = "Success status")
     public ResponseEntity<List<MosquitoOccurrenceDTO>> getAllMosquitoOccurrences() {
         List<MosquitoOccurrenceDTO> data = mosquitoService.getOccurrences();
         return ResponseEntity.ok(data);
