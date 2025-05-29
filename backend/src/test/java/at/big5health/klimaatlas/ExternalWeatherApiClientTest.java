@@ -5,8 +5,6 @@ import at.big5health.klimaatlas.exceptions.ErrorMessages;
 import at.big5health.klimaatlas.exceptions.ExternalApiException;
 import at.big5health.klimaatlas.grid.BoundingBox;
 import at.big5health.klimaatlas.httpclients.ExternalWeatherApiClient;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
@@ -31,8 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ExternalWeatherApiClientTest {
 
     private MockWebServer mockWebServer;
-    private ExternalWeatherApiClient apiClient;
-    private ObjectMapper objectMapper = new ObjectMapper(); // For creating JSON bodies if needed
+    private ExternalWeatherApiClient apiClient;// For creating JSON bodies if needed
 
     private BoundingBox testBbox;
     private LocalDate testDate;
@@ -61,7 +58,7 @@ class ExternalWeatherApiClientTest {
     }
 
     @Test
-    void fetchGridData_whenApiReturns200Ok_shouldReturnData() throws InterruptedException, JsonProcessingException {
+    void fetchGridData_whenApiReturns200Ok_shouldReturnData() throws InterruptedException {
         // Arrange
         // Create a realistic (but minimal) successful JSON response body
         String successJson = """
@@ -96,11 +93,11 @@ class ExternalWeatherApiClientTest {
                 .assertNext(collection -> {
                     assertThat(collection).isNotNull();
                     assertThat(collection.getFeatures()).isNotNull().hasSize(1);
-                    assertThat(collection.getFeatures().get(0).getProperties().getParameters())
+                    assertThat(collection.getFeatures().getFirst().getProperties().getParameters())
                             .containsKey("TX")
                             .containsKey("TN")
                             .containsKey("RR");
-                    assertThat(collection.getFeatures().get(0).getProperties().getParameters().get("TX").getData().get(0)).isEqualTo(25.5);
+                    assertThat(collection.getFeatures().getFirst().getProperties().getParameters().get("TX").getData().getFirst()).isEqualTo(25.5);
                 })
                 .verifyComplete(); // Verify the Mono completes successfully
 

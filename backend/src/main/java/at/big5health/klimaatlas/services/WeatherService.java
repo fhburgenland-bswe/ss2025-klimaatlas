@@ -226,21 +226,6 @@ public class WeatherService {
     }
 
     /**
-     * Retrieves a {@link WeatherReportDTO} for the given coordinates for the current date.
-     * <p>
-     * This is a convenience method that calls the primary
-     * {@link #getWeather(String, Double, Double, LocalDate)} method with today's date.
-     *
-     * @param latitude  The geographical latitude, in decimal degrees.
-     * @param longitude The geographical longitude, in decimal degrees.
-     * @return A {@link WeatherReportDTO} for the current date and specified coordinates.
-     */
-    public WeatherReportDTO getWeatherReportDTO(double latitude, double longitude) {
-        // Verwende die Hauptmethode mit dem aktuellen Datum
-        return getWeather(null, longitude, latitude, LocalDate.now());
-    }
-
-    /**
      * Finds the {@link SpartacusFeature} from a list that is geographically closest
      * to the given target latitude and longitude.
      * <p>
@@ -254,7 +239,7 @@ public class WeatherService {
      * @return An {@link Optional} containing the closest {@link SpartacusFeature},
      *         or an empty {@link Optional} if the input list is null or empty.
      */
-    private Optional<SpartacusFeature> findClosestFeature(List<SpartacusFeature> features, double targetLat, double targetLon) {
+    public Optional<SpartacusFeature> findClosestFeature(List<SpartacusFeature> features, double targetLat, double targetLon) {
         if (features == null || features.isEmpty()) {
             return Optional.empty();
         }
@@ -265,7 +250,7 @@ public class WeatherService {
                 .min(Comparator.comparingDouble(feature ->
                         distanceSquared(
                                 feature.getGeometry().getCoordinates().get(1), // latitude is index 1
-                                feature.getGeometry().getCoordinates().get(0), // longitude is index 0
+                                feature.getGeometry().getCoordinates().getFirst(), // longitude is index 0
                                 targetLat,
                                 targetLon
                         )
@@ -300,12 +285,12 @@ public class WeatherService {
      * @param parameterName The name of the parameter to extract (e.g., "TN", "TX", "SA").
      * @return The Double value of the parameter, or null if not found or data is missing.
      */
-    private Double getParameterValue(Map<String, SpartacusParameter> params, String parameterName) {
+    public Double getParameterValue(Map<String, SpartacusParameter> params, String parameterName) {
         if (params.containsKey(parameterName)) {
             SpartacusParameter param = params.get(parameterName);
             if (param != null && param.getData() != null && !param.getData().isEmpty()) {
                 // Assuming the first value in the list is the one we need.
-                return param.getData().get(0);
+                return param.getData().getFirst();
             } else {
                 LOG.warn("Parameter '{}' is present but has no data or data list is empty.", parameterName);
             }
@@ -357,7 +342,7 @@ public class WeatherService {
      *                    Can be {@code null}.
      * @return The corresponding {@link Precipitation} enum value.
      */
-    private Precipitation mapPrecipitation(Double precipValue) {
+    public Precipitation mapPrecipitation(Double precipValue) {
         if (precipValue == null || precipValue <= 0.0) return Precipitation.NONE;
         if (precipValue > 5.0) return Precipitation.RAIN;
         if (precipValue > 0.0) return Precipitation.DRIZZLE;

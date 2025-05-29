@@ -7,7 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 class KlimaatlasApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void main_shouldRunWithoutException() {
+		KlimaatlasApplication.main(new String[] {});
 	}
 
 }

@@ -1,4 +1,4 @@
-package at.big5health.klimaatlas;
+package at.big5health.klimaatlas.services;
 
 import at.big5health.klimaatlas.httpclients.ExternalWeatherApiClient;
 import at.big5health.klimaatlas.dtos.Precipitation;
@@ -14,7 +14,7 @@ import at.big5health.klimaatlas.exceptions.WeatherDataNotFoundException;
 import at.big5health.klimaatlas.grid.BoundingBox;
 import at.big5health.klimaatlas.grid.GridCellInfo;
 import at.big5health.klimaatlas.grid.GridUtil;
-import at.big5health.klimaatlas.services.WeatherService;
+import at.big5health.klimaatlas.models.WeatherReport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,10 +25,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.List;
+import java.util.Collections;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -176,7 +176,7 @@ class WeatherServiceTest {
         // Arrange
         double expectedSunDuration = 7200.0; // 2 hours in seconds
         SpartacusFeatureCollection mockCollection = createMockFeatureCollection(
-                targetLon, targetLat, 6.3, 12.9, 0.2, expectedSunDuration // Pass sun duration
+                targetLon, targetLat, expectedSunDuration // Pass sun duration
         );
         given(externalClient.fetchGridData(testBbox, testDate)).willReturn(Mono.just(mockCollection));
 
@@ -263,10 +263,10 @@ class WeatherServiceTest {
 
     // Helper methods
     private SpartacusFeatureCollection createMockFeatureCollection(
-            double lon, double lat, double minT, double maxT, double precip, Double sunDuration // Add sunDuration
+            double lon, double lat, Double sunDuration // Add sunDuration
     ) {
         SpartacusFeatureCollection collection = new SpartacusFeatureCollection();
-        collection.setFeatures(List.of(createSingleMockFeature(lon, lat, minT, maxT, precip, sunDuration)));
+        collection.setFeatures(List.of(createSingleMockFeature(lon, lat, 6.3, 12.9, 0.2, sunDuration)));
         return collection;
     }
 
@@ -303,6 +303,72 @@ class WeatherServiceTest {
         properties.setParameters(parametersMap);
         feature.setProperties(properties);
         return feature;
+    }
+
+    @Test
+    void getWeatherReport_whenCalled_shouldReturnMappedModel() {
+        LocalDate today = LocalDate.now();
+        WeatherReportDTO dto = new WeatherReportDTO(5.0, 15.0, Precipitation.RAIN, 3600.0, testLat, testLon, null);
+        doReturn(dto).when(weatherService).getWeather(null, testLon, testLat, today);
+
+        WeatherReport report = weatherService.getWeatherReport(testLat, testLon);
+
+        assertThat(report).isNotNull();
+        assertThat(report.getMaxTemp()).isEqualTo(15.0);
+        assertThat(report.getMinTemp()).isEqualTo(5.0);
+        assertThat(report.getLatitude()).isEqualTo(testLat);
+        assertThat(report.getLongitude()).isEqualTo(testLon);
+        assertThat(report.getPrecip()).isEqualTo(Precipitation.RAIN);
+        assertThat(report.getSunDuration()).isEqualTo(3600.0);
+    }
+
+    @Test
+    void getWeatherReport_whenInternalFails_shouldThrowExternalApiException() {
+        doThrow(new RuntimeException("Internal failure"))
+                .when(weatherService).getWeather(null, testLon, testLat, LocalDate.now());
+
+        assertThatThrownBy(() -> weatherService.getWeatherReport(testLat, testLon))
+                .isInstanceOf(ExternalApiException.class)
+                .hasMessageContaining("Error fetching weather data for coordinates");
+    }
+
+    @Test
+    void getOrFetchGridCellData_whenNoClosestFeatureFound_shouldReturnEmptyOptional() {
+        SpartacusFeatureCollection collection = new SpartacusFeatureCollection();
+        collection.setFeatures(List.of());
+
+        given(externalClient.fetchGridData(testBbox, testDate)).willReturn(Mono.just(collection));
+
+        Optional<WeatherReportDTO> result = weatherService.getOrFetchGridCellData(
+                testCellId, testBbox, testDate, targetLat, targetLon);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void findClosestFeature_whenFeatureListIsNullOrEmpty_shouldReturnEmptyOptional() {
+        assertThat(weatherService.findClosestFeature(null, 0.0, 0.0)).isEmpty();
+        assertThat(weatherService.findClosestFeature(List.of(), 0.0, 0.0)).isEmpty();
+    }
+
+    @Test
+    void getParameterValue_whenParamMissingOrEmpty_shouldReturnNullAndLog() {
+        Map<String, SpartacusParameter> emptyMap = Collections.emptyMap();
+        assertThat(weatherService.getParameterValue(emptyMap, "TN")).isNull();
+
+        SpartacusParameter emptyParam = new SpartacusParameter();
+        emptyParam.setData(Collections.emptyList());
+        Map<String, SpartacusParameter> mapWithEmpty = Map.of("TN", emptyParam);
+        assertThat(weatherService.getParameterValue(mapWithEmpty, "TN")).isNull();
+    }
+
+    @Test
+    void mapPrecipitation_shouldReturnExpectedEnum() {
+        assertThat(weatherService.mapPrecipitation(null)).isEqualTo(Precipitation.NONE);
+        assertThat(weatherService.mapPrecipitation(0.0)).isEqualTo(Precipitation.NONE);
+        assertThat(weatherService.mapPrecipitation(0.1)).isEqualTo(Precipitation.DRIZZLE);
+        assertThat(weatherService.mapPrecipitation(5.0)).isEqualTo(Precipitation.DRIZZLE);
+        assertThat(weatherService.mapPrecipitation(5.1)).isEqualTo(Precipitation.RAIN);
     }
 
 }
