@@ -1,6 +1,5 @@
-package at.big5health.klimaatlas;
+package at.big5health.klimaatlas.services;
 
-import at.big5health.klimaatlas.services.MosquitoService;
 import okhttp3.mockwebserver.MockWebServer;
 import at.big5health.klimaatlas.dtos.MosquitoOccurrenceDTO;
 import okhttp3.mockwebserver.MockResponse;

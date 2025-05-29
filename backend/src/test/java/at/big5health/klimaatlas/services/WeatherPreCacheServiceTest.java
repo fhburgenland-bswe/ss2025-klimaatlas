@@ -1,4 +1,4 @@
-package at.big5health.klimaatlas;
+package at.big5health.klimaatlas.services;
 
 import at.big5health.klimaatlas.config.AustrianPopulationCenter;
 import at.big5health.klimaatlas.dtos.Precipitation;
@@ -6,22 +6,13 @@ import at.big5health.klimaatlas.dtos.WeatherReportDTO;
 import at.big5health.klimaatlas.exceptions.ErrorMessages;
 import at.big5health.klimaatlas.exceptions.ExternalApiException;
 import at.big5health.klimaatlas.exceptions.WeatherDataNotFoundException;
-import at.big5health.klimaatlas.services.PopulationCenterService;
-import at.big5health.klimaatlas.services.WeatherPreCacheService;
-import at.big5health.klimaatlas.services.WeatherService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ConfigurableApplicationContext;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -43,12 +34,6 @@ class WeatherPreCacheServiceTest {
     private WeatherService weatherService;
 
     @Mock
-    private ConfigurableApplicationContext mockConfigurableApplicationContext;
-
-    @Mock
-    private SpringApplication mockSpringApplication;
-
-    @Mock
     private PopulationCenterService populationCenterService;
 
     @InjectMocks
@@ -67,12 +52,6 @@ class WeatherPreCacheServiceTest {
     @Test
     void preCacheOnStartup_shouldCallPerformPreCaching() {
         WeatherPreCacheService spiedPreCacheService = spy(weatherPreCacheService);
-        ApplicationReadyEvent event = new ApplicationReadyEvent(
-                mockSpringApplication,
-                new String[]{},
-                mockConfigurableApplicationContext,
-                Duration.ZERO
-        );
         spiedPreCacheService.preCacheOnStartup();
         verify(spiedPreCacheService, timeout(1000).times(1)).performPreCaching(eq("Startup"));
     }
@@ -137,12 +116,10 @@ class WeatherPreCacheServiceTest {
         List<AustrianPopulationCenter> testCenters = List.of(center1, center2);
         when(populationCenterService.getAllCenters()).thenReturn(testCenters);
 
-        // Successful call for center1
         when(weatherService.getWeather(
                 eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)))
                 .thenReturn(dummySuccessDTO);
 
-        // Failing call for center2
         doThrow(new ExternalApiException(ErrorMessages.EXTERNAL_API_FAILURE))
                 .when(weatherService).getWeather(
                         eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
@@ -165,11 +142,9 @@ class WeatherPreCacheServiceTest {
         when(weatherService.getWeather(eq(center1.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)))
                 .thenReturn(dummySuccessDTO);
 
-        // Simulated "interruption" via exception
         doThrow(new RuntimeException("Simulated error during processing"))
                 .when(weatherService).getWeather(eq(center2.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch));
 
-        // center3 will still be processed because only actual `InterruptedException` stops the loop
         when(weatherService.getWeather(eq(center3.getDisplayName()), anyDouble(), anyDouble(), eq(expectedDateToFetch)))
                 .thenReturn(dummySuccessDTO);
 

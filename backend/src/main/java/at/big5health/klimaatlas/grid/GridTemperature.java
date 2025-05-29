@@ -9,7 +9,6 @@ package at.big5health.klimaatlas.grid;
  * @param latitude    The geographical latitude of the grid point, in decimal degrees.
  * @param longitude   The geographical longitude of the grid point, in decimal degrees.
  * @param temperature The temperature at this grid point, typically in degrees Celsius.
- * @see at.big5health.klimaatlas.services.GridCacheService
  */
 public record GridTemperature(double latitude, double longitude, double temperature) {
     // No additional methods or fields needed for a simple data carrier.

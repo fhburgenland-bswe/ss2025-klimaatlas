@@ -1,7 +1,7 @@
-package at.big5health.klimaatlas;
+package at.big5health.klimaatlas.services;
 
 import at.big5health.klimaatlas.dtos.MosquitoOccurrenceDTO;
-import at.big5health.klimaatlas.services.MosquitoService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +13,6 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -71,7 +70,7 @@ public class MosquitoServiceTest {
 
         assertEquals(2, result.size());
 
-        MosquitoOccurrenceDTO dto1 = result.get(0);
+        MosquitoOccurrenceDTO dto1 = result.getFirst();
         assertEquals(47.123, dto1.getLatitude());
         assertEquals(15.456, dto1.getLongitude());
         assertEquals("Aedes albopictus", dto1.getSpecies());
@@ -107,7 +106,7 @@ public class MosquitoServiceTest {
 
         assertEquals(1, result.size());
 
-        MosquitoOccurrenceDTO dto = result.get(0);
+        MosquitoOccurrenceDTO dto = result.getFirst();
         assertEquals(47.123, dto.getLatitude());
         assertEquals(15.456, dto.getLongitude());
         assertEquals("Unknown", dto.getSpecies());
@@ -127,7 +126,7 @@ public class MosquitoServiceTest {
 
         List<MosquitoOccurrenceDTO> result = mosquitoService.getOccurrences();
 
-        assertTrue(result.isEmpty());
+        Assertions.assertTrue(result.isEmpty());
 
     }
 
