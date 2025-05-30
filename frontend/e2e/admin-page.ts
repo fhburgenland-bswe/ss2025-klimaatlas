@@ -22,8 +22,8 @@ export class AdminPage {
     this.loginButton = page.locator('button[type="submit"]');
     this.wrongCredentialsMessage = page.locator('.wrong-credentials');
 
-    this.healthRiskTextArea = page.locator('textarea[placeholder="Default input"]');
-    this.saveButton = page.locator('button:has-text("Save")');
+    this.healthRiskTextArea = page.locator('textarea[placeholder="Health Risk text"]');
+    this.saveButton = page.locator('button:has-text("Save Risk")');
 
     this.modal = page.locator('.modal.show');
     this.modalText = page.locator('.modal-body p');
@@ -42,7 +42,7 @@ export class AdminPage {
 
   async expectRedirectToHealthDataWriter() {
     await this.page.waitForURL('**/healthdatawriter');
-    await expect(this.healthRiskTextArea).toBeVisible();
+    await expect(this.healthRiskTextArea).toBeVisible({ timeout: 5000 });
   }
 
   async writeHealthRiskText(text: string) {
