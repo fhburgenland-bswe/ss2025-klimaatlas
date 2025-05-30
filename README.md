@@ -69,7 +69,25 @@ project-root/
 │   ├── config/                        # Code quality tools (Checkstyle, PMD)
 │   ├── build.gradle                   # Gradle build file
 │   └── settings.gradle
-└── frontend/ (coming soon)
+├── frontend/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── interfaces/              # TypeScript interfaces, types, enums (optionally `models`)
+│   │   │   ├── layout/                  # Application layout components (header, footer, nav)
+│   │   │   ├── services/                # Services for the apps
+│   │   │   ├── utils/                   # Utility functions, constants, formatters
+│   │   │   ├── app.component.ts
+│   │   │   ├── app.component.html
+│   │   │   ├── app.component.scss
+│   │   │   ├── app.component.spec.ts
+│   │   │   ├── app.config.ts
+│   │   │   ├── app.routes.ts
+│   │   ├── assets/                     # Static assets (images, icons, etc.)
+│   │   ├── index.html
+│   │   ├── main.ts
+│   │   └── styles.scss
+│   ├── e2e/                           # End-to-End Tests
+│   ├── test-results/                  # Test result outputs
 ```
 
 ---

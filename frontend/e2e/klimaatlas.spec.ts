@@ -10,7 +10,7 @@ test.describe('Klimaatlas Main Flows', () => {
     await klimaatlas.goto();
   });
 
-  test('should load homepage and verify key elements', async ({ page }) => {
+  test('should load homepage and verify key elements', async () => {
     await klimaatlas.expectTitle();
     await klimaatlas.expectSearchBarVisible();
     await klimaatlas.expectMapVisible();
@@ -18,29 +18,36 @@ test.describe('Klimaatlas Main Flows', () => {
 
   test('should search by postal code and city, and interact with the map', async ({ page }) => {
     await klimaatlas.searchLocation('1010');
-    await page.waitForTimeout(2000);
     await klimaatlas.expectLabelVisible('Wien');
 
     await klimaatlas.searchLocation('Pinkafeld');
-    await page.waitForTimeout(2000);
     await klimaatlas.expectLabelVisible('Pinkafeld');
   });
 
-  test('should allow zooming and panning on the map', async ({ page }) => {
+  test('should allow zooming and panning on the map', async () => {
     await klimaatlas.expectMapVisible();
     await klimaatlas.simulateZoomAndPan();
-    await klimaatlas.expectMapVisible(); // Check no crash
+    await klimaatlas.expectMapVisible();
   });
 
   test('should show empty map if no data available for search', async ({ page }) => {
     await klimaatlas.searchLocation('9999');
-    await page.waitForTimeout(1000);
     await klimaatlas.expectNoMarkers();
   });
 
-  test('should show suggestions when typing in search bar', async ({ page }) => {
+  test('should show suggestions when typing in search bar', async () => {
     await klimaatlas.searchBar.fill('Wien');
     await klimaatlas.expectSuggestions();
   });
+
+  test('should switch to mosquito lens and display markers', async () => {
+      await klimaatlas.selectMosquitoLens();
+      await klimaatlas.expectAtLeastOneMosquitoPin();
+    });
+
+    test('should switch to temperature lens and display markers', async () => {
+      await klimaatlas.selectTemperatureLens();
+      await klimaatlas.expectAtLeastOneTemperaturePin();
+    });
 
 });
