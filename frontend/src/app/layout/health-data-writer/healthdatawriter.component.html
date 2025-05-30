@@ -1,13 +1,35 @@
-<div class="container d-flex align-items-center justify-content-center border mt-5 p-5">
-    <div class="row d-flex align-items-center justify-content-center">
-        <div class="col-12">
-            <div>Type Health Risk Data to show on the website and then click on save button (max. 500 characters):</div>
+<div class="container d-flex flex-column align-items-center justify-content-center border mt-3 mb-3 p-5">
+    <div>
+        <div class="row d-flex align-items-center justify-content-center">
+            <h2 class="text-center">Health Risk Data Writer</h2>
+            <div class="col-12">
+                <div>Type Health Risk Data to show on the website and then click on save button (max. 500 characters):
+                </div>
+            </div>
+            <div class="col-12">
+                <textarea class="form-control mt-4" rows="4" maxlength="500" minlength="1" [(ngModel)]="healthRiskText"
+                    placeholder="Health Risk text">
+                </textarea>
+                <button class="btn btn-primary mt-2" (click)="saveRiskData()">Save Risk</button>
+            </div>
         </div>
-        <div class="col-12">
-            <textarea class="form-control mt-4" rows="4" maxlength="500" minlength="1" [(ngModel)]="healthRiskText"
-                placeholder="Default input">
-            </textarea>
-            <button class="btn btn-primary mt-2" (click)="saveData()">Save</button>
+    </div>
+
+    <div class="mt-4 mb-2 line"></div>
+
+    <div>
+        <div class="row d-flex align-items-center justify-content-center">
+            <h2 class="text-center mt-2">Health Status Data Writer</h2>
+            <div class="col-12">
+                <div>Type Health Status Data to show on the website and then click on save button (max. 500 characters):
+                </div>
+            </div>
+            <div class="col-12">
+                <textarea class="form-control mt-4" rows="4" maxlength="500" minlength="1"
+                    [(ngModel)]="healthStatusText" placeholder="Health Status text">
+                </textarea>
+                <button class="btn btn-primary mt-2" (click)="saveStatusData()">Save Status</button>
+            </div>
         </div>
     </div>
 
@@ -15,7 +37,7 @@
 
     <div class="modal-backdrop fade show" *ngIf="showModal" (click)="closeModal()" (keydown.enter)="closeModal()"
         (keydown.space)="closeModal()" tabindex="0" role="button" aria-label="Close modal background"></div>
-        
+
     <div class="modal mt-5" tabindex="-1" role="dialog" [class.show]="showModal"
         [style.display]="showModal ? 'block' : 'none'" attr.aria-modal="{{showModal}}">
         <div class="modal-dialog" role="document">

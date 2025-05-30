@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-admin',
@@ -10,11 +11,11 @@ import { Router } from '@angular/router';
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.scss'
 })
-export class AdminComponent implements OnInit{
+export class AdminComponent implements OnInit {
   form: FormGroup;
   isValid = true;
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(private fb: FormBuilder, private router: Router, private authService: AuthService) {
     this.form = this.fb.group({
       username: [''],
       password: ['']
@@ -32,9 +33,8 @@ export class AdminComponent implements OnInit{
   onSubmit() {
     const { username, password } = this.form.value;
     if (username == 'admin' && password == 'admin') {
-      console.log(username, "username");
-      console.log(password, "pw");
       this.isValid = true;
+      this.authService.setFromAdmin(true);
       this.router.navigate(['/healthdatawriter']);
     } else {
       this.isValid = false;

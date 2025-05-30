@@ -12,19 +12,38 @@ import { Router } from '@angular/router';
 })
 export class HealthdatawriterComponent {
   healthRiskText = '';
+  healthStatusText = '';
   showModal = false;
 
   constructor(private http: HttpClient, private router: Router) { };
 
-  saveData() {
+  saveRiskData() {
     const formData = new FormData();
     formData.append('text', this.healthRiskText);
 
-    this.http.post('http://localhost:8081/save.php', formData, { responseType: 'text' })
+    this.http.post('http://localhost:8081/save-risk.php', formData, { responseType: 'text' })
       .subscribe({
         next: () => {
           console.log('success')
           this.healthRiskText = '';
+          this.showModal = true;
+        },
+        error: (err) => {
+          this.showModal = true;
+          console.error('failure', err)
+        }
+      });
+  }
+
+  saveStatusData() {
+    const formData = new FormData();
+    formData.append('text', this.healthStatusText);
+
+    this.http.post('http://localhost:8081/save-status.php', formData, { responseType: 'text' })
+      .subscribe({
+        next: () => {
+          console.log('success')
+          this.healthStatusText = '';
           this.showModal = true;
         },
         error: (err) => {
