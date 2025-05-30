@@ -106,49 +106,4 @@ public class GridUtil {
 
         return new GridCellInfo(cellId, bbox, targetLatitude, targetLongitude);
     }
-
-    /**
-     * Generates a list of unique grid cells that cover a given geographical bounding box,
-     * based on a specified grid resolution.
-     * <p>
-     * This method iterates over the bounding box using the provided {@code gridResolution}
-     * (in degrees) as a step. For each point in this iteration, it determines the
-     * corresponding grid cell using {@link #getGridCellForCoordinates(double, double)}.
-     * Duplicate cells (based on cell ID) are avoided to ensure each unique grid cell
-     * that intersects or is near the iteration points is included only once.
-     *
-     * @param boundingBox    The {@link BoundingBox} defining the overall area for which
-     *                       to generate grid cells.
-     * @param gridResolution The step size in decimal degrees for iterating across
-     *                       the latitude and longitude of the bounding box. A smaller
-     *                       value will result in more iteration points and potentially
-     *                       more fine-grained coverage.
-     * @return A list of unique {@link GridCellInfo} objects representing the grid cells.
-     *         The list may be empty if the bounding box is invalid or the resolution
-     *         results in no cells.
-     */
-    public List<GridCellInfo> generateGrid(BoundingBox boundingBox, double gridResolution) {
-        List<GridCellInfo> gridCells = new ArrayList<>();
-        LOGGER.info("Generating grid for BoundingBox: {} with resolution: {}",
-                boundingBox.toApiString(), gridResolution);
-
-        double minLat = boundingBox.getMinLat();
-        double maxLat = boundingBox.getMaxLat();
-        double minLon = boundingBox.getMinLon();
-        double maxLon = boundingBox.getMaxLon();
-        Set<String> seenCellIds = new HashSet<>(); // To track unique cell IDs
-
-        for (double lat = minLat; lat <= maxLat; lat += gridResolution) {
-            for (double lon = minLon; lon <= maxLon; lon += gridResolution) {
-                GridCellInfo cell = getGridCellForCoordinates(lat, lon);
-                if (seenCellIds.add(cell.getCellId())) { // Add to list only if cellId is new
-                    gridCells.add(cell);
-                }
-            }
-        }
-
-        LOGGER.info("Generated {} unique grid cells for BoundingBox: {}",
-                gridCells.size(), boundingBox.toApiString());
-        return gridCells;
-    }
 }
