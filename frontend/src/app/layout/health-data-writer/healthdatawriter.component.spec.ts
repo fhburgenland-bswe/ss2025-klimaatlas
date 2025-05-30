@@ -25,14 +25,14 @@ describe('HealthdatawriterComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should send POST request and reset form on success', fakeAsync(() => {
+  it('should send POST request and reset form on success by Risk', fakeAsync(() => {
 
     component.healthRiskText = 'Test data';
-    component.saveData();
+    component.saveRiskData();
 
     tick();
   
-    const req = httpMock.expectOne('http://localhost:8081/save.php');
+    const req = httpMock.expectOne('http://localhost:8081/save-risk.php');
     expect(req.request.method).toBe('POST');
     expect(req.request.body instanceof FormData).toBeTrue();
     expect(req.request.responseType).toBe('text');
@@ -45,14 +45,14 @@ describe('HealthdatawriterComponent', () => {
     expect(component.showModal).toBeTrue();
   }));
 
-  it('should log error on failed POST request', fakeAsync(() => {
+  it('should log error on failed POST request by Risk', fakeAsync(() => {
     spyOn(console, 'error');
     component.healthRiskText = 'Test failure';
-    component.saveData();
+    component.saveRiskData();
     
     tick();
 
-    const req = httpMock.expectOne('http://localhost:8081/save.php');
+    const req = httpMock.expectOne('http://localhost:8081/save-risk.php');
     req.flush('error occurred', { status: 500, statusText: 'Server Error' });
     
     tick();
@@ -60,6 +60,44 @@ describe('HealthdatawriterComponent', () => {
     expect(console.error).toHaveBeenCalledWith('failure', jasmine.anything());
     expect(component.showModal).toBeTrue();
   }));
+
+  
+  it('should send POST request and reset form on success by Status', fakeAsync(() => {
+
+    component.healthStatusText = 'Test data';
+    component.saveStatusData();
+
+    tick();
+  
+    const req = httpMock.expectOne('http://localhost:8081/save-status.php');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBeTrue();
+    expect(req.request.responseType).toBe('text');
+
+    req.flush('success');
+
+    tick();
+
+    expect(component.healthStatusText).toBe('');
+    expect(component.showModal).toBeTrue();
+  }));
+
+  it('should log error on failed POST request by Status', fakeAsync(() => {
+    spyOn(console, 'error');
+    component.healthStatusText = 'Test failure';
+    component.saveStatusData();
+    
+    tick();
+
+    const req = httpMock.expectOne('http://localhost:8081/save-status.php');
+    req.flush('error occurred', { status: 500, statusText: 'Server Error' });
+    
+    tick();
+
+    expect(console.error).toHaveBeenCalledWith('failure', jasmine.anything());
+    expect(component.showModal).toBeTrue();
+  }));
+
 
 
   afterEach(() => {
