@@ -5,12 +5,24 @@ export class KlimaatlasPage {
   readonly searchBar: Locator;
   readonly mapCanvas: Locator;
   readonly suggestions: Locator;
+  readonly lensToggleButton: Locator;
+  readonly mosquitoLensOption: Locator;
+  readonly temperatureLensOption: Locator;
+  readonly lensDropdown: Locator;
+  readonly mosquitoPins: Locator;
+  readonly temperaturePins: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.searchBar = page.locator('input[placeholder="Ort oder Postleitzahl..."]').first();
     this.mapCanvas = page.locator('div#map');
     this.suggestions = page.locator('ul.list-group > li.list-group-item');
+    this.lensToggleButton = page.locator('button.lens-icon');
+    this.lensDropdown = page.locator('ul.lens-dropdown');
+    this.mosquitoLensOption = this.lensDropdown.locator('li').nth(0);
+    this.temperatureLensOption = this.lensDropdown.locator('li').nth(1);
+    this.mosquitoPins = page.locator('img[alt="mosquito lens"]');
+    this.temperaturePins = page.locator('img[alt="temperature lens"]');
   }
 
   async goto() {
@@ -61,4 +73,30 @@ export class KlimaatlasPage {
       await this.page.mouse.up();
     }
   }
+
+  async openLensDropdown() {
+    await this.lensToggleButton.click();
+    await expect(this.lensDropdown).toHaveClass(/open/);
+  }
+
+  async selectMosquitoLens() {
+    await this.openLensDropdown();
+    await this.mosquitoLensOption.click();
+  }
+
+  async expectAtLeastOneMosquitoPin() {
+    const count = await this.mosquitoPins.count();
+     expect(count).toBeGreaterThan(0);
+  }
+
+  async selectTemperatureLens() {
+    await this.openLensDropdown();
+    await this.temperatureLensOption.click();
+  }
+
+  async expectAtLeastOneTemperaturePin() {
+    const count = await this.temperaturePins.count();
+    expect(count).toBeGreaterThan(0);
+  }
+
 }
