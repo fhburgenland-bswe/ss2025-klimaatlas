@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { MainComponent } from './layout/main/main.component';
 import { AdminComponent } from './layout/admin/admin.component';
 import { HealthdatawriterComponent } from './layout/health-data-writer/healthdatawriter.component';
+import { healthDataGuard } from './guards/health-data.guard';
 
 export const routes: Routes = [
   {
@@ -14,6 +15,7 @@ export const routes: Routes = [
   },
   {
     path: 'healthdatawriter',
-    component: HealthdatawriterComponent
+    component: HealthdatawriterComponent,
+    canActivate: [healthDataGuard]
   }
 ];

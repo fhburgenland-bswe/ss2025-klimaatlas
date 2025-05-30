@@ -20,6 +20,7 @@ export class ContentComponent implements OnInit {
   filteredCities: City[] = [];
   selectedMarker?: L.Marker;
   healthRiskContent = '';
+  healthStatusContent = '';
 
   @Input() data: MosquitoOccurrence | null = null;
 
@@ -30,16 +31,34 @@ export class ContentComponent implements OnInit {
       this.cities = data;
     });
     this.loadHealthData();
+    this.loadHealthRiskData();
+    this.loadHealthStatusData();
     console.log("oninit: " + this.healthRiskContent);
   }
 
   loadHealthData() {
-    this.http.get('http://localhost:8081/load.php', { responseType: 'text' })
+    this.loadHealthRiskData();
+    this.loadHealthStatusData();
+  }
+
+  loadHealthStatusData() {
+    this.http.get('http://localhost:8081/load-status.php', { responseType: 'text' })
+      .subscribe({
+        next: data => this.healthStatusContent = data,
+        error: err => {
+          console.error('Failure when loading the Health Status content', err);
+          this.healthStatusContent = 'Health Status Content is not available at the moment.'
+        }
+      })
+  }
+
+  loadHealthRiskData() {
+    this.http.get('http://localhost:8081/load-risk.php', { responseType: 'text' })
       .subscribe({
         next: data => this.healthRiskContent = data,
         error: err => {
-          console.error('Failure when loading the content', err);
-          this.healthRiskContent = 'Data is not available at the moment.'
+          console.error('Failure when loading the Health Risk content', err);
+          this.healthRiskContent = 'Health Risk Content is not available at the moment.'
         }
       })
   }
