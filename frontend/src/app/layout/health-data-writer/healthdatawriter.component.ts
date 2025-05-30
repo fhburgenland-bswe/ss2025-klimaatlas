@@ -21,7 +21,7 @@ export class HealthdatawriterComponent {
     const formData = new FormData();
     formData.append('text', this.healthRiskText);
 
-    this.http.post('http://localhost:8081/saveRisk.php', formData, { responseType: 'text' })
+    this.http.post('http://localhost:8081/save-risk.php', formData, { responseType: 'text' })
       .subscribe({
         next: () => {
           console.log('success')
@@ -39,7 +39,7 @@ export class HealthdatawriterComponent {
     const formData = new FormData();
     formData.append('text', this.healthStatusText);
 
-    this.http.post('http://localhost:8081/saveStatus.php', formData, { responseType: 'text' })
+    this.http.post('http://localhost:8081/save-status.php', formData, { responseType: 'text' })
       .subscribe({
         next: () => {
           console.log('success')
