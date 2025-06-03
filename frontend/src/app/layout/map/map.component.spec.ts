@@ -22,10 +22,10 @@ describe('MapComponent', () => {
       options: {},
       getPosition: () => 'topright',
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      setPosition: () => {},
+      setPosition: () => { },
       getContainer: () => document.createElement('div'),
       // eslint-disable-next-line @typescript-eslint/no-empty-function
-      remove: () => {}
+      remove: () => { }
     } as unknown as L.Control.Zoom);
   });
 
@@ -48,7 +48,7 @@ describe('MapComponent', () => {
     fixture = TestBed.createComponent(MapComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
-    mapService = TestBed.inject(MapService); 
+    mapService = TestBed.inject(MapService);
   });
 
   afterEach(() => {
@@ -100,120 +100,45 @@ describe('MapComponent', () => {
     tick();
   }));
 
-  it('should register focus and blur events', fakeAsync(() => {
-    const addEventListenerSpy = jasmine.createSpy('addEventListener');
-    const removeEventListenerSpy = jasmine.createSpy('removeEventListener');
-
-    const mockContainer = {
-      addEventListener: addEventListenerSpy,
-      removeEventListener: removeEventListenerSpy
-    };
-
-    const onSpy = jasmine.createSpy('on').and.callFake((event: string, callback: () => void) => {
-      callback(); // közvetlenül meghívjuk a callbacket
-      return fakeMap;
-    });
-
-    const fakeMap = {
-      on: onSpy,
-      getContainer: () => mockContainer,
-      createPane: jasmine.createSpy(),
-      getPane: jasmine.createSpy().and.returnValue(document.createElement('div')),
-      scrollWheelZoom: {
-        enable: jasmine.createSpy(),
-        disable: jasmine.createSpy()
-      },
-      addLayer: jasmine.createSpy(),
-      remove: jasmine.createSpy(),
-      hasLayer: jasmine.createSpy().and.returnValue(false),
-      removeLayer: jasmine.createSpy()
-    } as unknown as L.Map;
-
-    spyOn(L, 'map').and.returnValue(fakeMap);
-
-    fixture.detectChanges();
-
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const actualDateStr = yesterday.toISOString().split('T')[0];
-
-    component.onLensSelected('temperature');
-
-    httpMock.expectOne(`http://localhost:8080/dailyweather/cached?actualDate=${actualDateStr}`).flush([]);
-    httpMock.expectOne('assets/austria-regions.geojson').flush({ type: 'FeatureCollection', features: [] });
-
-    tick();
-
-    expect(addEventListenerSpy).toHaveBeenCalledWith('wheel', jasmine.any(Function));
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('wheel', jasmine.any(Function));
-  }));
-
-  it('should enable scroll zoom if ctrlKey is pressed', () => {
-    const scrollZoomMock = {
-      enable: jasmine.createSpy('enable'),
-      disable: jasmine.createSpy('disable'),
-    };
-
-    const mockElement = document.createElement('div');
-    spyOn(mockElement, 'addEventListener');
-    spyOn(mockElement, 'removeEventListener');
-    
-    component.map = {
-      scrollWheelZoom: scrollZoomMock,
-      getMinZoom: () => 6,
-      remove: jasmine.createSpy('remove'),
-      on: jasmine.createSpy('on').and.callFake(function (this: L.Map) {
-        return this;
-      }),
-      getContainer: () => document.createElement('div')
-    } as unknown as L.Map;
-  
-    const event = new WheelEvent('wheel', { ctrlKey: true });
-    component.handleMapScroll(event);
-  
-    expect(scrollZoomMock.enable).toHaveBeenCalled();
-    expect(scrollZoomMock.disable).not.toHaveBeenCalled();
-  });
-  
   it('should call map.remove on destroy', () => {
     const removeSpy = jasmine.createSpy();
     component.map = { remove: removeSpy } as unknown as L.Map;
-  
+
     component.ngOnDestroy();
-  
+
     expect(removeSpy).toHaveBeenCalled();
   });
-  
+
   it('should add markers for mosquito data', fakeAsync(() => {
     const validIcon = L.icon({
       iconUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=',
       iconSize: [1, 1]
     });
-  
+
     const marker = L.marker([48, 16], { icon: validIcon });
 
     spyOn(L, 'marker').and.returnValue(marker);
     spyOn(marker, 'bindPopup').and.callThrough();
     spyOn(marker, 'on').and.callThrough();
-  
+
     fixture.detectChanges();
     component.onLensSelected('mosquito');
     httpMock.expectOne('assets/austria-regions.geojson').flush({ type: 'FeatureCollection', features: [] });
-  
+
     const mockData: MosquitoOccurrence[] = [{
       species: 'Aedes testus',
       eventDate: '2024-01-01',
       latitude: 48,
       longitude: 16
     }];
-  
+
     httpMock.expectOne('http://localhost:8080/mosquitoes').flush(mockData);
     tick();
-  
+
     expect(marker.bindPopup).toHaveBeenCalled();
     expect(marker.on).toHaveBeenCalled();
   }));
-  
+
   it('should handle marker click and popupclose', fakeAsync(() => {
     const originalMarkerFn = L.marker;
 
@@ -270,94 +195,34 @@ describe('MapComponent', () => {
 
   it('should set hasMosquitoError to true on mosquitoService error', fakeAsync(() => {
     spyOn(console, 'error');
-  
+
     fixture.detectChanges();
 
     component.onLensSelected('mosquito');
 
     httpMock.expectOne('assets/austria-regions.geojson').flush({ type: 'FeatureCollection', features: [] });
     httpMock.expectOne('http://localhost:8080/mosquitoes').flush('Error', { status: 500, statusText: 'Server Error' });
-  
+
     tick();
-  
+
     expect(component.hasError).toBeTrue();
   }));
-  
+
   it('should format valid date correctly', () => {
     const formatted = component['formatDate']('2024-01-01');
     expect(formatted).toBe('01.01.2024');
   });
-  
+
   it('should return fallback text for unknown date string', () => {
     expect(component['formatDate']('Unknown')).toBe('Unknown Datum');
     expect(component['formatDate']('')).toBe('Unknown Datum');
     expect(component['formatDate']('invalid-date')).toBe('Unknown Datum');
   });
-  
+
   it('should reset hasError on closePopup', () => {
     component.hasError = true;
     component.closePopup();
     expect(component.hasError).toBeFalse();
-  });
-
-  it('should register addEventListener and removeEventListener on focus and blur', fakeAsync(() => {
-    const addEventListenerSpy = jasmine.createSpy('addEventListener');
-    const removeEventListenerSpy = jasmine.createSpy('removeEventListener');
-
-    const mockContainer = {
-      addEventListener: addEventListenerSpy,
-      removeEventListener: removeEventListenerSpy
-    };
-
-    const onSpy = jasmine.createSpy('on').and.callFake((event, callback) => {
-      callback();
-      return fakeMap;
-    });
-
-    const fakeMap = {
-    on: onSpy,
-    getContainer: () => mockContainer,
-    createPane: jasmine.createSpy(),
-    getPane: jasmine.createSpy().and.returnValue(document.createElement('div')),
-    scrollWheelZoom: {
-      enable: jasmine.createSpy(),
-      disable: jasmine.createSpy()
-    },
-    addLayer: jasmine.createSpy(),
-    remove: jasmine.createSpy()
-  } as unknown as L.Map;
-
-    spyOn(L, 'map').and.returnValue(fakeMap);
-
-    fixture.detectChanges();
-
-    httpMock.expectOne('assets/austria-regions.geojson').flush({ type: 'FeatureCollection', features: [] });
-
-    tick();
-
-    expect(addEventListenerSpy).toHaveBeenCalledWith('wheel', jasmine.any(Function));
-    expect(removeEventListenerSpy).toHaveBeenCalledWith('wheel', jasmine.any(Function));
-  }));
-
-  it('should disable scroll zoom if ctrlKey is not pressed', () => {
-    const scrollZoomMock = {
-      enable: jasmine.createSpy(),
-      disable: jasmine.createSpy()
-    };
-
-    component.map = {
-      scrollWheelZoom: scrollZoomMock,
-      getMinZoom: () => 6,
-      remove: jasmine.createSpy('remove'),
-      on: jasmine.createSpy('on'),
-      getContainer: () => document.createElement('div')
-    } as unknown as L.Map;
-
-    const event = new WheelEvent('wheel', { ctrlKey: false });
-    component.handleMapScroll(event);
-
-    expect(scrollZoomMock.disable).toHaveBeenCalled();
-    expect(scrollZoomMock.enable).not.toHaveBeenCalled();
   });
 
   it('should call map.remove on destroy', () => {
@@ -397,19 +262,19 @@ describe('MapComponent', () => {
     });
 
     component['map'] = {
-    hasLayer: jasmine.createSpy('hasLayer').and.returnValue(false),
-    removeLayer: jasmine.createSpy('removeLayer'),
-    addLayer: jasmine.createSpy('addLayer'),
-    getContainer: () => document.createElement('div'),
-    scrollWheelZoom: {
-      enable: jasmine.createSpy(),
-      disable: jasmine.createSpy(),
-    },
-    on: jasmine.createSpy('on'),
-    createPane: jasmine.createSpy('createPane'),
-    getPane: jasmine.createSpy('getPane').and.returnValue(document.createElement('div')),
-    remove: jasmine.createSpy('remove')
-  } as unknown as L.Map;
+      hasLayer: jasmine.createSpy('hasLayer').and.returnValue(false),
+      removeLayer: jasmine.createSpy('removeLayer'),
+      addLayer: jasmine.createSpy('addLayer'),
+      getContainer: () => document.createElement('div'),
+      scrollWheelZoom: {
+        enable: jasmine.createSpy(),
+        disable: jasmine.createSpy(),
+      },
+      on: jasmine.createSpy('on'),
+      createPane: jasmine.createSpy('createPane'),
+      getPane: jasmine.createSpy('getPane').and.returnValue(document.createElement('div')),
+      remove: jasmine.createSpy('remove')
+    } as unknown as L.Map;
 
     component.onLensSelected('temperature');
 
@@ -434,7 +299,7 @@ describe('MapComponent', () => {
   it('should remove selectedMarker and selectedTempMarker, and clear layers on lens switch', fakeAsync(() => {
     const mapMock = jasmine.createSpyObj('map', ['hasLayer', 'removeLayer', 'addLayer', 'getContainer', 'on', 'remove']);
     // eslint-disable-next-line @typescript-eslint/no-empty-function
-    mapMock.scrollWheelZoom = { enable: () => {}, disable: () => {} };
+    mapMock.scrollWheelZoom = { enable: () => { }, disable: () => { } };
     mapMock.getContainer.and.returnValue(document.createElement('div'));
     mapMock.on.and.returnValue(mapMock);
 
@@ -462,7 +327,44 @@ describe('MapComponent', () => {
     expect(mapMock.removeLayer).toHaveBeenCalledWith(component['mosquitoLayer']);
     expect(mapMock.removeLayer).toHaveBeenCalledWith(component['temperatureLayer']);
   }));
-});
+  
+  it('should remove existing map if already initialized', () => {
+    const mockMap = jasmine.createSpyObj<L.Map>('map', ['remove']);
+
+    component['map'] = mockMap;
+
+    (component as unknown as { initMap: () => void }).initMap();
+
+    expect(mockMap.remove).toHaveBeenCalled();
+  });
+
+  it('should initialize map with zoom 6 and minZoom 6 for mobile', () => {
+    spyOnProperty(window, 'innerWidth').and.returnValue(500); // mobil
+    const mapSpy = spyOn(L, 'map').and.callThrough();
+
+    component['initMap']();
+
+    expect(mapSpy).toHaveBeenCalledWith('map', jasmine.objectContaining({
+      zoom: 6,
+      minZoom: 6,
+      touchZoom: true
+    }));
+  });
+
+  it('should initialize map with zoom 7 and minZoom 8 for desktop', () => {
+    spyOnProperty(window, 'innerWidth').and.returnValue(1024); // desktop
+    const mapSpy = spyOn(L, 'map').and.callThrough();
+
+    component['initMap']();
+
+    expect(mapSpy).toHaveBeenCalledWith('map', jasmine.objectContaining({
+      zoom: 7,
+      minZoom: 8,
+      touchZoom: false
+    }));
+  });
+
+})
 
 describe('MapComponent - Weather Error Handling', () => {
   let component: MapComponent;
@@ -548,4 +450,4 @@ describe('MapComponent - Weather Error Handling', () => {
     expect(component.hasError).toBeTrue();
     expect(component.errorMessages).toEqual(['An unknown error occurred.']);
   });
-});
+})

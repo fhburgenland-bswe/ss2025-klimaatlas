@@ -6,6 +6,10 @@ import { MapService } from '../../../../services/map.service';
 import * as L from 'leaflet';
 import { MosquitoOccurrence } from '../../../../interfaces/mosquito-occurrence.interface';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { WeatherService } from '../../../../services/weather.service';
+import { WeatherReportDTO } from '../../../../interfaces/weather';
+import { translatePrecipitation } from '../../../../utils/precipitation-translator';
+import { SelectionService } from '../../../../services/selection.service';
 
 @Component({
   selector: 'app-content',
@@ -21,24 +25,66 @@ export class ContentComponent implements OnInit {
   selectedMarker?: L.Marker;
   healthRiskContent = '';
   healthStatusContent = '';
+  weatherInfo: {
+    cityName: string;
+    minTemp: number;
+    maxTemp: number;
+    precipitation: string;
+  } | null = null;
+
 
   @Input() data: MosquitoOccurrence | null = null;
 
-  constructor(private mapService: MapService, private http: HttpClient) { }
+  constructor(private mapService: MapService, private http: HttpClient, private weatherService: WeatherService, private selectionService: SelectionService) { }
 
   ngOnInit(): void {
     this.mapService.getCities().subscribe(data => {
       this.cities = data;
     });
+
+    this.selectionService.selectedWeatherReport$.subscribe(report => {
+      if (report) {
+        this.weatherInfo = {
+          cityName: report.cityName,
+          minTemp: report.minTemp,
+          maxTemp: report.maxTemp,
+          precipitation: translatePrecipitation(report.precip),
+        };
+      } else {
+        this.weatherInfo = null;
+      }
+    });
+    
     this.loadHealthData();
-    this.loadHealthRiskData();
-    this.loadHealthStatusData();
-    console.log("oninit: " + this.healthRiskContent);
   }
 
   loadHealthData() {
     this.loadHealthRiskData();
     this.loadHealthStatusData();
+  }
+
+  loadTemperatureData() {
+    this.weatherService.getCachedWeatherReports().subscribe({
+      next: (reports: WeatherReportDTO[]) => {
+        if (reports.length > 0) {
+          const report = reports[0];
+          this.selectionService.setSelectedWeatherReport(report);
+          this.weatherInfo = {
+            cityName: report.cityName,
+            minTemp: report.minTemp,
+            maxTemp: report.maxTemp,
+            precipitation: translatePrecipitation(report.precip)
+          };
+        } else {
+          this.selectionService.setSelectedWeatherReport(null);
+          this.weatherInfo = null;
+        }
+      },
+      error: () => {
+        this.selectionService.setSelectedWeatherReport(null);
+        this.weatherInfo = null;
+      }
+    });
   }
 
   loadHealthStatusData() {
@@ -101,6 +147,31 @@ export class ContentComponent implements OnInit {
     console.log(city);
 
     this.mapService.loadDistricts(city);
+
+    this.weatherService.getCachedWeatherReports().subscribe({
+      next: (reports: WeatherReportDTO[]) => {
+        const matchedReport = reports.find(r =>
+          r.cityName.toLowerCase() === city.place.toLowerCase()
+        );
+
+        if (matchedReport) {
+          this.selectionService.setSelectedWeatherReport(matchedReport);
+          this.weatherInfo = {
+            cityName: matchedReport.cityName,
+            minTemp: matchedReport.minTemp,
+            maxTemp: matchedReport.maxTemp,
+            precipitation: translatePrecipitation(matchedReport.precip)
+          };
+        } else {
+          this.selectionService.setSelectedWeatherReport(null);
+          this.weatherInfo = null;
+        }
+      },
+      error: () => {
+        this.selectionService.setSelectedWeatherReport(null);
+        this.weatherInfo = null;
+      }
+    });
   }
 
   onEnterKey(event: KeyboardEvent): void {
