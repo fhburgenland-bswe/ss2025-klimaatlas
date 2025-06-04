@@ -11,7 +11,7 @@
     <div class="toggle-button-container">
         <div class="btn-group m-3 justify-content-center d-flex" role="group" *ngIf="!isCollapsed">
             <button type="button" class="btn btn-outline-secondary" [class.active]="activePanel === 'content'"
-                (click)="showPanel('content')">
+                (click)="showPanel('content')" data-testid="content-tab-button">
                 Content
             </button>
             <button type="button" class="btn btn-outline-secondary" [class.active]="activePanel === 'sources'"
@@ -36,7 +36,8 @@
             <app-sources *ngIf="activePanel === 'sources'"></app-sources>
         </div>
 
-        <div class="btn-group m-auto w-100 d-flex justify-content-center align-items-center btn-group-mobile-bottom" *ngIf="!isCollapsed">
+        <div class="btn-group m-auto w-100 d-flex justify-content-center align-items-center btn-group-mobile-bottom"
+            *ngIf="!isCollapsed">
             <button class="btn btn-outline-secondary" [class.active]="activePanel === 'content'"
                 (click)="showPanel('content')">
                 Content

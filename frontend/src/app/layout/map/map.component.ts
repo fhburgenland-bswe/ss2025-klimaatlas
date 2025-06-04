@@ -62,7 +62,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     private mosquitoService: MosquitoService,
     private selectionService: SelectionService,
     private weatherService: WeatherService
-    ) { }
+  ) { }
 
   ngAfterViewInit(): void {
     // eslint-disable-next-line
@@ -73,26 +73,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       iconUrl: 'assets/img/marker-icon-2x.png',
       shadowUrl: 'assets/img/marker-shadow.png'
     });
-
-    this.map.on('focus', () => {
-      const container = this.map.getContainer();
-      container.addEventListener('wheel', this.handleMapScroll.bind(this));
-    });
-
-    this.map.on('blur', () => {
-      const container = this.map.getContainer();
-      container.removeEventListener('wheel', this.handleMapScroll.bind(this));
-    });
-
     this.loadRegions();
-  }
-
-  handleMapScroll(event: WheelEvent): void {
-    if (event.ctrlKey) {
-      this.map.scrollWheelZoom.enable();
-    } else {
-      this.map.scrollWheelZoom.disable();
-    }
   }
 
   ngOnDestroy(): void {
@@ -114,7 +95,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       maxZoom: 15,
       maxBounds: this.bounds,
       zoomControl: false,
-      scrollWheelZoom: false,
+      scrollWheelZoom: true,
       touchZoom: isMobile,
       doubleClickZoom: false,
       maxBoundsViscosity: 1.0
@@ -206,6 +187,8 @@ export class MapComponent implements AfterViewInit, OnDestroy {
               }));
 
               this.selectedTempMarker = marker;
+
+              this.selectionService.setSelectedWeatherReport(report);
             })
             .on('popupclose', () => {
               if (this.selectedTempMarker === marker) {
@@ -260,7 +243,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
               if (this.selectedMarker) {
                 this.selectedMarker.setIcon(this.mosquitoIcon);
               }
-              
+
               marker.setIcon(this.higlightedMosquitoIcon);
               this.selectedMarker = marker;
 
@@ -273,7 +256,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
               }
               this.selectionService.setSelectedOccurrence(null);
             });
-  
+
           this.mosquitoLayer.addLayer(marker);
         });
         this.map.addLayer(this.mosquitoLayer);
@@ -299,14 +282,14 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
   private formatDate(dateStr: string): string {
     if (!dateStr || dateStr === 'Unknown') return 'Unknown Datum';
-  
+
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return 'Unknown Datum';
-  
+
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
-  
+
     return `${day}.${month}.${year}`;
   }
 

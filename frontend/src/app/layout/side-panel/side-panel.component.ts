@@ -14,7 +14,7 @@ import { SelectionService } from '../../services/selection.service';
 })
 export class SidePanelComponent implements OnInit{
   isCollapsed = false;
-  activePanel: 'content' | 'sources' = 'content';
+  activePanel: 'sources' | 'content' = 'sources';
   isMobile = false;
 
   selectedOccurrence: MosquitoOccurrence | null = null;
@@ -23,14 +23,6 @@ export class SidePanelComponent implements OnInit{
 
   ngOnInit(): void {
     this.checkViewport();
-
-    this.selectionService.selectedOccurrence$.subscribe(occurrence => {
-      this.selectedOccurrence = occurrence;
-      if (occurrence) {
-        this.activePanel = 'content';
-        this.isCollapsed = false;
-      }
-    });
   }
 
 @HostListener('window:resize')

@@ -13,4 +13,12 @@ describe('AuthService', () => {
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
+
+  it('should return the correct value of fromAdmin', () =>{
+    (service as unknown as { fromAdmin: boolean }).fromAdmin = true;
+    expect(service.getFromAdmin()).toBeTrue();
+
+    (service as unknown as { fromAdmin: boolean }).fromAdmin = false;
+    expect(service.getFromAdmin()).toBeFalse();
+  });
 });
