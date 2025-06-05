@@ -28,14 +28,20 @@
 <div class="d-flex mt-4 p-2">
   <div class="row">
     <div class="col-md-12 panel-content" [ngClass]="{ 'hidden': isCollapsed }">
-      <h2>
-        Temperature
-      </h2>
-      <p>
-        Lorem ipsum dolor sit amet consectetur, adipisicing elit. Nam amet fugit necessitatibus libero culpa
-        numquam at iste ut ipsum. Maxime quaerat minus quis ullam laboriosam praesentium ab provident itaque
-        quo.
-      </p>
+      <div class="weather-info p-2 mb-2">
+        <ng-container *ngIf="weatherInfo; else noWeatherInfo">
+          <p class="text-center"><strong>{{ weatherInfo.cityName }}</strong></p>
+          <p>❄️ Min: {{ weatherInfo.minTemp }}</p>
+          <p>🔥 Max: {{ weatherInfo.maxTemp }}</p>
+          <p>☁️ Niederschlag: {{ weatherInfo.precipitation }}</p>
+        </ng-container>
+
+        <ng-template #noWeatherInfo>
+          <p class="text-muted fst-italic text-center">
+            Bitte suchen Sie im Eingabefeld oder klicken Sie auf einen Temperature-Pin.
+          </p>
+        </ng-template>
+      </div>
     </div>
     <div class="col-md-12 panel-content" [ngClass]="{ 'hidden': isCollapsed }">
       <h2>
@@ -57,7 +63,7 @@
         <p><strong>Spezies:</strong> {{ data.species }}</p>
         <p><strong>Datum:</strong> {{ data.eventDate | date:'dd.MM.yyyy' }}</p>
         <p><strong>Koordinaten:</strong> {{ data.latitude }}, {{ data.longitude }}</p>
-      </div>      
+      </div>
     </div>
   </div>
 </div>
