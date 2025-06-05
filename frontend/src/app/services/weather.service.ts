@@ -9,7 +9,7 @@ import { WeatherReportDTO } from '../interfaces/weather';
 export class WeatherService {
   private readonly apiBaseUrl = 'http://localhost:8080/dailyweather';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   private getYesterdayDate(): string {
     const yesterday = new Date();
@@ -21,5 +21,22 @@ export class WeatherService {
     const date = this.getYesterdayDate();
     const url = `${this.apiBaseUrl}/cached?actualDate=${date}`;
     return this.http.get<WeatherReportDTO[]>(url);
+  }
+
+  getWeatherReportByCoords(
+    cityName: string,
+    latitude: number,
+    longitude: number,
+    date: string
+  ): Observable<WeatherReportDTO> {
+    const params = new URLSearchParams({
+      cityName,
+      longitude: longitude.toString(),
+      latitude: latitude.toString(),
+      actualDate: date,
+    });
+    return this.http.get<WeatherReportDTO>(
+      `http://localhost:8080/dailyweather?${params.toString()}`
+    );
   }
 }

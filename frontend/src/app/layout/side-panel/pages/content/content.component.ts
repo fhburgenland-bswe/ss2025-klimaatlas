@@ -35,7 +35,7 @@ export class ContentComponent implements OnInit {
 
   @Input() data: MosquitoOccurrence | null = null;
 
-  constructor(private mapService: MapService, private http: HttpClient, private weatherService: WeatherService, private selectionService: SelectionService) { }
+  constructor(private mapService: MapService, private http: HttpClient, public weatherService: WeatherService, private selectionService: SelectionService) { }
 
   ngOnInit(): void {
     this.mapService.getCities().subscribe(data => {
@@ -54,7 +54,7 @@ export class ContentComponent implements OnInit {
         this.weatherInfo = null;
       }
     });
-    
+
     this.loadHealthData();
   }
 
@@ -125,10 +125,17 @@ export class ContentComponent implements OnInit {
     );
   }
 
+  private getYesterdayDate(): string {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
+  }
+
   selectPlace(city: City): void {
     const lat = parseFloat(city.latitude);
     const lon = parseFloat(city.longitude);
     const map = this.mapService.getMap();
+    const date = this.getYesterdayDate();
     if (!map) return;
 
     map.setView([lat, lon], 15);
@@ -144,8 +151,6 @@ export class ContentComponent implements OnInit {
 
     this.filteredCities = [];
     this.searchTerm = `${city.place} (${city.zipcode})`;
-    console.log(city);
-
     this.mapService.loadDistricts(city);
 
     this.weatherService.getCachedWeatherReports().subscribe({
@@ -163,11 +168,26 @@ export class ContentComponent implements OnInit {
             precipitation: translatePrecipitation(matchedReport.precip)
           };
         } else {
-          this.selectionService.setSelectedWeatherReport(null);
-          this.weatherInfo = null;
+          this.weatherService.getWeatherReportByCoords(city.place, lat, lon, date).subscribe({
+            next: report => {
+              this.selectionService.setSelectedWeatherReport(report);
+              this.weatherInfo = {
+                cityName: report.cityName,
+                minTemp: report.minTemp,
+                maxTemp: report.maxTemp,
+                precipitation: translatePrecipitation(report.precip)
+              };
+            },
+            error: err => {
+              console.error("NO DATA AVAILABLE", err);
+              this.selectionService.setSelectedWeatherReport(null);
+              this.weatherInfo = null;
+            }
+          });
         }
       },
-      error: () => {
+      error: err => {
+        console.error("NO DATA AVAILABLE", err);
         this.selectionService.setSelectedWeatherReport(null);
         this.weatherInfo = null;
       }

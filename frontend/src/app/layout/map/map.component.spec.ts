@@ -372,7 +372,7 @@ describe('MapComponent - Weather Error Handling', () => {
   let weatherService: jasmine.SpyObj<WeatherService>;
 
   beforeEach(async () => {
-    const weatherSpy = jasmine.createSpyObj('WeatherService', ['getCachedWeatherReports']);
+    const weatherSpy = jasmine.createSpyObj('WeatherService', ['getCachedWeatherReports', 'getWeatherReportByCoords']);
 
     await TestBed.configureTestingModule({
       imports: [HttpClientTestingModule, MapComponent],
