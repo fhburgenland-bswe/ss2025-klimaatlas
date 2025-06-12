@@ -12,11 +12,11 @@
         <div class="btn-group m-3 justify-content-center d-flex" role="group" *ngIf="!isCollapsed">
             <button type="button" class="btn btn-outline-secondary" [class.active]="activePanel === 'content'"
                 (click)="showPanel('content')" data-testid="content-tab-button">
-                Content
+                Inhalt
             </button>
             <button type="button" class="btn btn-outline-secondary" [class.active]="activePanel === 'sources'"
                 (click)="showPanel('sources')">
-                Sources
+                Quellen
             </button>
         </div>
     </div>
@@ -40,11 +40,11 @@
             *ngIf="!isCollapsed">
             <button class="btn btn-outline-secondary" [class.active]="activePanel === 'content'"
                 (click)="showPanel('content')">
-                Content
+                Inhalt
             </button>
             <button class="btn btn-outline-secondary" [class.active]="activePanel === 'sources'"
                 (click)="showPanel('sources')">
-                Sources
+                Quellen
             </button>
         </div>
     </div>
